@@ -58,7 +58,7 @@ body {
 
 h1 {
     font-weight: 400;
-    margin-top: 4rem;
+    margin-top: 1.5rem;
     margin-bottom: 1.5rem;
     font-size: 3.2rem;
     line-height: 1;
@@ -112,6 +112,7 @@ hr.footer, hr.header {
     margin-bottom: 2em;
 }
 
+
 hr.header {
     margin-top: 1em;
 }
@@ -143,7 +144,7 @@ p.date {
 }
 
 .danger {
-    color: red;
+    color: rgb(26, 25, 25);
 }
 
 article {
@@ -312,9 +313,9 @@ img {
 .marginnote {
     float: right;
     clear: right;
-    margin-right: -60%;
+    margin-right: -20%;
     width: 50%;
-    margin-top: 0.3rem;
+    margin-top: -10rem;
     margin-bottom: 0;
     font-size: 1.1rem;
     line-height: 1.3;
@@ -348,7 +349,7 @@ nav#TOC li {
 .sidenote-number:after,
 .sidenote:before {
     font-family: et-book-roman-old-style;
-    color: #a00000;
+    color: #0c0c0c;
     position: relative;
     vertical-align: baseline;
 }
@@ -454,7 +455,7 @@ pre > code {
     width: 55%;
     overflow-x: auto;
     display: block;
-    background: white;
+    background: rgb(228, 220, 220);
     border: gray 1.5px solid;
     padding: 0.5rem;
     border-radius: 8px;
@@ -494,7 +495,7 @@ label.sidenote-number {
 
 label.margin-toggle:not(.sidenote-number) {
     display: none;
-    color: #a00000;
+    color: #211e1e;
 }
 
 .iframe-wrapper {
