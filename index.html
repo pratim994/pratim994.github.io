@@ -2,78 +2,657 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Pratim</title>
-   
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pratim - cmake</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@300;400&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+        :root {
+            --bg: #050a15;
+            --surface: rgba(255,255,255,0.04);
+            --border: rgba(255,255,255,0.08);
+            --accent: #7fdbca;
+            --accent2: #c084fc;
+            --text: #e8e8f0;
+            --muted: #8888aa;
+            --heading: #ffffff;
+        }
 
-    <!-- CSS -->
-    <link rel="stylesheet" href="tufte.css">
-    <link rel="stylesheet" href="mathfonts.css">
-    <link rel="stylesheet" href="fontello.css">
-    <link rel="stylesheet" href="custom.css">
+        html { scroll-behavior: smooth; }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 15px;
+            line-height: 1.7;
+            overflow-x: hidden;
+        }
+
+        /* ── STARFIELD CANVAS ── */
+        #starfield {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* ── NEBULA BLOBS ── */
+        .nebula {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.18;
+            pointer-events: none;
+            z-index: 0;
+            animation: drift 20s ease-in-out infinite alternate;
+        }
+        .nebula-1 { width: 600px; height: 400px; background: #1a237e; top: -100px; left: -100px; }
+        .nebula-2 { width: 500px; height: 500px; background: #4a148c; bottom: 20%; right: -150px; animation-delay: -7s; }
+        .nebula-3 { width: 400px; height: 300px; background: #006064; top: 40%; left: 20%; animation-delay: -13s; }
+        @keyframes drift { to { transform: translate(30px, 20px) scale(1.05); } }
+
+        /* ── LAYOUT ── */
+        .wrapper {
+            position: relative;
+            z-index: 1;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        /* ── MUSIC PLAYER ── */
+        #music-btn {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            z-index: 100;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 50%;
+            width: 52px;
+            height: 52px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            backdrop-filter: blur(12px);
+            transition: all 0.3s ease;
+            color: var(--accent);
+            font-size: 1.3rem;
+        }
+        #music-btn:hover { background: rgba(127,219,202,0.12); transform: scale(1.1); }
+        #music-btn.playing { animation: pulse-ring 2s ease-in-out infinite; }
+        @keyframes pulse-ring {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(127,219,202,0.4); }
+            50% { box-shadow: 0 0 0 10px rgba(127,219,202,0); }
+        }
+        #music-label {
+            position: fixed;
+            bottom: 2rem;
+            right: 5rem;
+            z-index: 100;
+            font-size: 0.7rem;
+            color: var(--muted);
+            backdrop-filter: blur(12px);
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 0.3rem 0.8rem;
+            opacity: 0;
+            transform: translateX(10px);
+            transition: all 0.3s ease;
+            pointer-events: none;
+            white-space: nowrap;
+        }
+        #music-btn:hover ~ #music-label,
+        #music-btn.playing ~ #music-label { opacity: 1; transform: translateX(0); }
+
+        /* ── NAV ── */
+        nav {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            padding: 1.2rem 0;
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            background: rgba(5,10,21,0.7);
+        }
+        nav .wrapper {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .nav-logo {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.3rem;
+            color: var(--heading);
+            letter-spacing: 0.05em;
+        }
+        .nav-logo span { color: var(--accent); }
+        .nav-links { display: flex; gap: 2rem; list-style: none; }
+        .nav-links a {
+            color: var(--muted);
+            text-decoration: none;
+            font-size: 0.78rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            transition: color 0.2s;
+        }
+        .nav-links a:hover { color: var(--accent); }
+
+        /* ── HERO ── */
+        #hero {
+            min-height: 90vh;
+            display: flex;
+            align-items: center;
+            padding: 6rem 0 4rem;
+        }
+        .hero-inner {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 4rem;
+            align-items: center;
+            width: 100%;
+        }
+        .hero-tag {
+            font-size: 0.72rem;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            color: var(--accent);
+            margin-bottom: 1.2rem;
+            opacity: 0;
+            animation: fadeUp 0.8s 0.2s forwards;
+        }
+        .hero-name {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(3rem, 8vw, 5.5rem);
+            font-weight: 700;
+            color: var(--heading);
+            line-height: 1.05;
+            opacity: 0;
+            animation: fadeUp 0.8s 0.4s forwards;
+        }
+        .hero-name em {
+            font-style: italic;
+            color: var(--accent);
+        }
+        .hero-desc {
+            margin-top: 1.5rem;
+            color: var(--muted);
+            max-width: 460px;
+            font-size: 0.88rem;
+            line-height: 1.8;
+            opacity: 0;
+            animation: fadeUp 0.8s 0.6s forwards;
+        }
+        .hero-email {
+            display: inline-block;
+            margin-top: 1.8rem;
+            font-size: 0.8rem;
+            color: var(--accent2);
+            text-decoration: none;
+            border-bottom: 1px solid rgba(192,132,252,0.3);
+            padding-bottom: 2px;
+            transition: border-color 0.2s;
+            opacity: 0;
+            animation: fadeUp 0.8s 0.8s forwards;
+        }
+        .hero-email:hover { border-color: var(--accent2); }
+
+        /* profile pic */
+        .hero-photo {
+            opacity: 0;
+            animation: fadeIn 1s 0.5s forwards;
+        }
+        .hero-photo img {
+            width: 160px;
+            height: 160px;
+            border-radius: 50%;
+            object-fit: cover;
+            object-position: center top;
+            border: 2px solid var(--border);
+            box-shadow: 0 0 0 8px rgba(127,219,202,0.06), 0 0 40px rgba(127,219,202,0.1);
+        }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(24px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* ── SECTION ── */
+        section { padding: 5rem 0; }
+        .section-label {
+            font-size: 0.7rem;
+            letter-spacing: 0.25em;
+            text-transform: uppercase;
+            color: var(--accent);
+            margin-bottom: 0.5rem;
+        }
+        .section-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.2rem;
+            font-weight: 400;
+            color: var(--heading);
+            margin-bottom: 3rem;
+        }
+
+        /* ── PROJECTS ── */
+        .projects-grid {
+            display: grid;
+            gap: 1.5rem;
+        }
+        .project-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 2rem;
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 1rem;
+            align-items: start;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            color: inherit;
+            position: relative;
+            overflow: hidden;
+        }
+        .project-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(127,219,202,0.04), transparent);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .project-card:hover { border-color: rgba(127,219,202,0.3); transform: translateY(-2px); }
+        .project-card:hover::before { opacity: 1; }
+        .project-num {
+            font-size: 0.65rem;
+            color: var(--accent);
+            letter-spacing: 0.15em;
+            margin-bottom: 0.6rem;
+            opacity: 0.7;
+        }
+        .project-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.2rem;
+            color: var(--heading);
+            margin-bottom: 0.4rem;
+        }
+        .project-desc {
+            font-size: 0.8rem;
+            color: var(--muted);
+            line-height: 1.6;
+        }
+        .project-date {
+            font-size: 0.7rem;
+            color: var(--muted);
+            white-space: nowrap;
+            opacity: 0.6;
+        }
+        .project-arrow {
+            font-size: 1rem;
+            color: var(--accent);
+            margin-top: 0.3rem;
+            transition: transform 0.2s;
+        }
+        .project-card:hover .project-arrow { transform: translate(3px, -3px); }
+
+        /* ── INTERESTS ── */
+        .tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.8rem;
+            margin-top: 1.5rem;
+        }
+        .tag {
+            font-size: 0.75rem;
+            letter-spacing: 0.08em;
+            padding: 0.4rem 1rem;
+            border-radius: 100px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            color: var(--muted);
+            transition: all 0.2s;
+        }
+        .tag:hover { border-color: var(--accent); color: var(--accent); }
+
+        /* ── FOOTER ── */
+        footer {
+            border-top: 1px solid var(--border);
+            padding: 2.5rem 0;
+            color: var(--muted);
+            font-size: 0.75rem;
+        }
+        footer .wrapper {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* ── SCROLLBAR ── */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-thumb { background: rgba(127,219,202,0.2); border-radius: 2px; }
+
+        /* ── RESPONSIVE ── */
+        @media (max-width: 640px) {
+            .hero-inner { grid-template-columns: 1fr; }
+            .hero-photo { order: -1; }
+            .hero-photo img { width: 100px; height: 100px; }
+            .nav-links { gap: 1rem; }
+            footer .wrapper { flex-direction: column; gap: 0.5rem; text-align: center; }
+        }
+    </style>
 </head>
-
 <body>
 
-<header class="links">
-    <a href="#">About me </a>
+<!-- Nebula effects -->
+<div class="nebula nebula-1"></div>
+<div class="nebula nebula-2"></div>
+<div class="nebula nebula-3"></div>
 
-   
+<!-- Starfield -->
+<canvas id="starfield"></canvas>
 
-</header>
+<!-- Music button -->
+<button id="music-btn" title="Toggle Für Elise">♪</button>
+<div id="music-label">Für Elise — Beethoven</div>
+
+<!-- Nav -->
+<nav>
+    <div class="wrapper">
+        <div class="nav-logo">Pratim<span>.</span></div>
+        <ul class="nav-links">
+            <li><a href="#about">About</a></li>
+            <li><a href="#projects">Projects</a></li>
+        </ul>
+    </div>
+</nav>
+
+<!-- Hero -->
+<div class="wrapper">
+    <section id="about">
+        <div id="hero">
+            <div class="hero-inner">
+                <div>
+                    <h1 class="hero-name">Pratim<br><em>Chakraborty</em></h1>
+                    <p class="hero-desc">
+                        I am interested in competitive programming, low level sytem architechture , networking , operating systems as well as developing low latency software.
+                        I really love solving difficult problems.    
+                                   </p>
+                    <a class="hero-email" href="mailto:aryanpratim86@gmail.com">aryanpratim86@gmail.com</a>
+                </div>
+                <div class="hero-photo">
+                    <img src="ssl.jpg" alt="Pratim Aryan">
+                </div>
+            </div>
+        </div>
+
+        <!-- Interests -->
+        <div>
+            <p class="section-label" style="margin-top: 1.5rem;">Languages</p>
+            <div class="tags">
+                <span class="tag">C++ </span>
+                <span class="tag">Python</span>
+                <span class="tag">Typescript / Javacript </span>
+                <span class="tag">node.js</span>
+            </div>
+            </div>
+
+            <div>
+            <p class="section-label" style="margin-top: 1.5rem;">Frameworks</p>
+            <div class="tags">
+                <span class="tag">React</span>
+                <span class="tag">Next</span>
+                <span class="tag">gRPC</span>
+            </div>
+        </div>
 
 
-<article>
+        <div>
 
-<section>
-
-
-<p>
-Hello, I'm Pratim . I am an open source developer, upcoming sde . I am interested in cyber 
-security as well as game development.
-</p>
-
-<p>
-On this page I am going to document my projects, the journey and what I have learned from 
-them.
-</p>
+            <p class="section-label" style="margin-top: 1.5rem;">Backend / databse</p>
+            <div class="tags">
+                <span class="tag"> mySQL </span>
+                <span class="tag">graphQl</span>
+                </div>
+        </div>
 
 
-<figure class="marginnote profile-pic">
-    <img src="ssl.png" alt="My photo">
-</figure>
+        <div>
+            <p class="section-label" style="margin-top: 1.5rem;"> Tools </p>
+            <div class="tags">
+            <span class="tag">git bash</span>
+            <span class="tag">git lab</span>
+            <span class="tag">boost/asio</span>
+            <span class="tag">Vim and tmux</span>
+            <span class="tag">Visual studio </span>
+                </div>
+        </div>
+    </section>
 
-<p>
- <em>aryanpratim86@gmail.com</em>.
-</p>
-</section>
+    <!-- Projects -->
+    <section id="projects">
+        <p class="section-label">Selected Work</p>
+        <h2 class="section-title">Projects</h2>
+        <div class="projects-grid">  
+             <a class="project-card" href="https://github.com/pratim994/Pycraft" target="_blank" rel="noopener">
+                <div>
+                    <p class="project-num">01 · January 2026</p>
+                    <h3 class="project-title">PineCraft</h3>
+                    <p class="project-desc">Developed a minecraft inspired real-time infinite 3D terrain generation and rendering engine using Python, Pygame,
+PyOpenGL, and ModernGL</p>
+                </div>
+                <div>
+                    <p class="project-date">Jan 2026</p>
+                    <p class="project-arrow">↗</p>
+                </div>
+            </a>
 
-<section>
-<h2 id="posts">
-    <span class="anchor"></span>
-    Projects
-</h2>
 
-<ol>
-    <li>
-        <a href="https://github.com/pratim994/Python-BitTorrent-client">Bit torrent client in python:</a>
-                   
-                    
-        
-        <em>(December 2025)</em>
-    </li>
-    <li>
-        <a href="https://github.com/pratim994/webby-http-server">Created a c++ server from scratch </a>
-        <em>(November 2025)</em>
-    </li>
-    <li>
-        <a href="https://github.com/pratim994/TTS">Made a text to speech converter</a>
-        <em>(october 2025)</em>
-    </li>
-</ol>
-</section>
 
-</article>
+
+
+            <a class="project-card" href="https://github.com/pratim994/Python-BitTorrent-client" target="_blank" rel="noopener">
+                <div>
+                    <p class="project-num">01 · December 2025</p>
+                    <h3 class="project-title">Python BitTorrent Client</h3>
+                    <p class="project-desc">A fully functional BitTorrent client built in Python, implementing the peer-to-peer file transfer protocol from scratch.</p>
+                </div>
+                <div>
+                    <p class="project-date">Dec 2025</p>
+                    <p class="project-arrow">↗</p>
+                </div>
+            </a>
+
+            <a class="project-card" href="https://github.com/pratim994/webby-http-server" target="_blank" rel="noopener">
+                <div>
+                    <p class="project-num">02 · November 2025</p>
+                    <h3 class="project-title">C++ HTTP Server</h3>
+                    <p class="project-desc">A bare-metal HTTP server written in C++ from the ground up — no frameworks, just raw sockets and systems knowledge.</p>
+                </div>
+                <div>
+                    <p class="project-date">Nov 2025</p>
+                    <p class="project-arrow">↗</p>
+                </div>
+            </a>
+
+            <a class="project-card" href="https://github.com/pratim994/TTS" target="_blank" rel="noopener">
+                <div>
+                    <p class="project-num">03 · October 2025</p>
+                    <h3 class="project-title">Text-to-Speech Converter</h3>
+                    <p class="project-desc">A text-to-speech engine converting written text into natural-sounding audio output.</p>
+                </div>
+                <div>
+                    <p class="project-date">Oct 2025</p>
+                    <p class="project-arrow">↗</p>
+                </div>
+            </a>
+
+        </div>
+    </section>
+</div>
+
+<footer>
+    <div class="wrapper">
+    </div>
+</footer>
+
+<!-- ── SCRIPTS ── -->
+<script>
+// ── STARFIELD ──
+(function() {
+    const canvas = document.getElementById('starfield');
+    const ctx = canvas.getContext('2d');
+    let W, H, stars = [], shootingStars = [];
+
+    function resize() {
+        W = canvas.width = window.innerWidth;
+        H = canvas.height = window.innerHeight;
+    }
+
+    function initStars() {
+        stars = [];
+        for (let i = 0; i < 280; i++) {
+            stars.push({
+                x: Math.random() * W,
+                y: Math.random() * H,
+                r: Math.random() * 1.4 + 0.2,
+                alpha: Math.random() * 0.7 + 0.2,
+                speed: Math.random() * 0.03 + 0.005,
+                twinkleDir: Math.random() > 0.5 ? 1 : -1
+            });
+        }
+    }
+
+    function spawnShootingStar() {
+        shootingStars.push({
+            x: Math.random() * W * 0.6 + W * 0.2,
+            y: Math.random() * H * 0.4,
+            vx: (Math.random() * 4 + 3),
+            vy: (Math.random() * 2 + 1),
+            len: Math.random() * 120 + 80,
+            alpha: 1,
+            life: 1
+        });
+    }
+
+    function draw() {
+        ctx.clearRect(0, 0, W, H);
+
+        // Stars
+        stars.forEach(s => {
+            s.alpha += s.speed * s.twinkleDir;
+            if (s.alpha > 0.9 || s.alpha < 0.1) s.twinkleDir *= -1;
+            ctx.beginPath();
+            ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(200, 220, 255, ${s.alpha})`;
+            ctx.fill();
+        });
+
+        // Shooting stars
+        shootingStars.forEach((ss, i) => {
+            ss.x += ss.vx;
+            ss.y += ss.vy;
+            ss.life -= 0.015;
+            const grad = ctx.createLinearGradient(ss.x, ss.y, ss.x - ss.vx * (ss.len / ss.vx), ss.y - ss.vy * (ss.len / ss.vx));
+            grad.addColorStop(0, `rgba(180, 240, 255, ${ss.life})`);
+            grad.addColorStop(1, 'rgba(180, 240, 255, 0)');
+            ctx.beginPath();
+            ctx.moveTo(ss.x, ss.y);
+            ctx.lineTo(ss.x - ss.vx * 12, ss.y - ss.vy * 12);
+            ctx.strokeStyle = grad;
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+            if (ss.life <= 0) shootingStars.splice(i, 1);
+        });
+
+        requestAnimationFrame(draw);
+    }
+
+    resize();
+    initStars();
+    window.addEventListener('resize', () => { resize(); initStars(); });
+    setInterval(spawnShootingStar, 3500);
+    draw();
+})();
+</script>
+
+<script>
+// ── FÜR ELISE (Web Audio API) ──
+(function() {
+    let ctx, playing = false, scheduledNodes = [], loopTimeout;
+    const btn = document.getElementById('music-btn');
+
+    // Für Elise - main theme notes [frequency, duration_beats]
+    // Using simplified A minor theme
+    const notes = [
+        // Main motif x2
+        [659.25, 0.25],[622.25, 0.25],[659.25, 0.25],[622.25, 0.25],[659.25, 0.25],[493.88, 0.25],[587.33, 0.25],[523.25, 0.25],
+        [440.00, 0.5], [0, 0.25],
+        [261.63, 0.25],[329.63, 0.25],[440.00, 0.25],[493.88, 0.5], [0, 0.25],
+        [329.63, 0.25],[415.30, 0.25],[493.88, 0.25],[523.25, 0.5], [0, 0.25],
+        [329.63, 0.25],[659.25, 0.25],[622.25, 0.25],[659.25, 0.25],[622.25, 0.25],[659.25, 0.25],
+        [493.88, 0.25],[587.33, 0.25],[523.25, 0.25],[440.00, 0.5], [0, 0.25],
+        [261.63, 0.25],[329.63, 0.25],[440.00, 0.25],[493.88, 0.5], [0, 0.25],
+        [329.63, 0.25],[523.25, 0.25],[493.88, 0.25],[440.00, 0.75],
+    ];
+
+    const BPM = 84;
+    const BEAT = 60 / BPM;
+
+    function playNotes() {
+        if (!playing) return;
+        scheduledNodes = [];
+        let t = ctx.currentTime + 0.05;
+
+        notes.forEach(([freq, beats]) => {
+            if (freq === 0) { t += beats * BEAT; return; }
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain); gain.connect(ctx.destination);
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(freq, t);
+            gain.gain.setValueAtTime(0, t);
+            gain.gain.linearRampToValueAtTime(0.12, t + 0.01);
+            gain.gain.exponentialRampToValueAtTime(0.001, t + beats * BEAT * 0.95);
+            osc.start(t);
+            osc.stop(t + beats * BEAT);
+            scheduledNodes.push(osc);
+            t += beats * BEAT;
+        });
+
+        const totalDur = notes.reduce((s, [, b]) => s + b * BEAT * 1000, 0);
+        loopTimeout = setTimeout(playNotes, totalDur - 200);
+    }
+
+    function stopAll() {
+        clearTimeout(loopTimeout);
+        scheduledNodes.forEach(n => { try { n.stop(); } catch(e){} });
+        scheduledNodes = [];
+    }
+
+    btn.addEventListener('click', () => {
+        if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)();
+        if (ctx.state === 'suspended') ctx.resume();
+
+        playing = !playing;
+        btn.textContent = playing ? '♬' : '♪';
+        btn.classList.toggle('playing', playing);
+
+        if (playing) playNotes();
+        else stopAll();
+    });
+})();
+</script>
 
 </body>
 </html>
