@@ -1,659 +1,1206 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pratim - cmake</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@300;400&display=swap" rel="stylesheet">
-    <style>
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+<!-- ================================================================
+     HEAD / METADATA
+     ================================================================ -->
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>le labyrinthe</title>
+<meta name="description" content="Portfolio of YOUR_NAME — Software Engineer | Backend Developer | Problem Solver. Projects, writing, and background." />
+<meta property="og:title" content="YOUR_NAME · Software Engineer" />
+<meta property="og:description" content="Portfolio, projects, and writing from YOUR_NAME." />
+<meta property="og:type" content="website" />
 
-        :root {
-            --bg: #050a15;
-            --surface: rgba(255,255,255,0.04);
-            --border: rgba(255,255,255,0.08);
-            --accent: #7fdbca;
-            --accent2: #c084fc;
-            --text: #e8e8f0;
-            --muted: #8888aa;
-            --heading: #ffffff;
-        }
+<!-- Inline SVG favicon (keeps this a true single file — no extra assets) -->
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%234F46E5'/%3E%3Cpath d='M11 11 6 16l5 5M21 11l5 5-5 5M18.5 9l-5 14' stroke='%23fff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E" />
 
-        html { scroll-behavior: smooth; }
+<!-- Set theme before first paint to avoid a flash of the wrong color scheme -->
+<script>
+  (function () {
+    var saved = localStorage.getItem("theme");
+    var theme = saved || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    document.documentElement.setAttribute("data-theme", theme);
+  })();
+</script>
 
-        body {
-            background: var(--bg);
-            color: var(--text);
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 15px;
-            line-height: 1.7;
-            overflow-x: hidden;
-        }
+<!-- Google Fonts — the only external/CDN dependency this page uses -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
 
-        /* ── STARFIELD CANVAS ── */
-        #starfield {
-            position: fixed;
-            inset: 0;
-            z-index: 0;
-            pointer-events: none;
-        }
+<style>
+/* ================================================================
+   CSS STYLES
+   ================================================================ */
 
-        /* ── NEBULA BLOBS ── */
-        .nebula {
-            position: fixed;
-            border-radius: 50%;
-            filter: blur(80px);
-            opacity: 0.18;
-            pointer-events: none;
-            z-index: 0;
-            animation: drift 20s ease-in-out infinite alternate;
-        }
-        .nebula-1 { width: 600px; height: 400px; background: #1a237e; top: -100px; left: -100px; }
-        .nebula-2 { width: 500px; height: 500px; background: #4a148c; bottom: 20%; right: -150px; animation-delay: -7s; }
-        .nebula-3 { width: 400px; height: 300px; background: #006064; top: 40%; left: 20%; animation-delay: -13s; }
-        @keyframes drift { to { transform: translate(30px, 20px) scale(1.05); } }
+/* ---- Design tokens ------------------------------------------- */
+:root {
+  --color-bg: #f7f8fa;
+  --color-bg-elevated: #ffffff;
+  --color-bg-subtle: #eef0f4;
+  --color-text: #1b1f27;
+  --color-text-muted: #5b6472;
+  --color-text-faint: #8b93a1;
+  --color-border: #e3e6eb;
+  --color-border-hover: #c7cdf7;
+  --color-accent: #4f46e5;
+  --color-accent-hover: #4338ca;
+  --color-accent-soft: #eef0ff;
+  --color-accent-contrast: #ffffff;
+  --color-nav-bg: rgba(247, 248, 250, 0.86);
 
-        /* ── LAYOUT ── */
-        .wrapper {
-            position: relative;
-            z-index: 1;
-            max-width: 900px;
-            margin: 0 auto;
-            padding: 0 2rem;
-        }
+  --shadow-sm: 0 1px 2px rgba(23, 24, 32, 0.04), 0 1px 1px rgba(23, 24, 32, 0.03);
+  --shadow-md: 0 6px 16px rgba(23, 24, 32, 0.06), 0 2px 6px rgba(23, 24, 32, 0.04);
+  --shadow-lg: 0 16px 40px rgba(23, 24, 32, 0.10), 0 4px 12px rgba(23, 24, 32, 0.05);
 
-        /* ── MUSIC PLAYER ── */
-        #music-btn {
-            position: fixed;
-            bottom: 2rem;
-            right: 2rem;
-            z-index: 100;
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 50%;
-            width: 52px;
-            height: 52px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            backdrop-filter: blur(12px);
-            transition: all 0.3s ease;
-            color: var(--accent);
-            font-size: 1.3rem;
-        }
-        #music-btn:hover { background: rgba(127,219,202,0.12); transform: scale(1.1); }
-        #music-btn.playing { animation: pulse-ring 2s ease-in-out infinite; }
-        @keyframes pulse-ring {
-            0%, 100% { box-shadow: 0 0 0 0 rgba(127,219,202,0.4); }
-            50% { box-shadow: 0 0 0 10px rgba(127,219,202,0); }
-        }
-        #music-label {
-            position: fixed;
-            bottom: 2rem;
-            right: 5rem;
-            z-index: 100;
-            font-size: 0.7rem;
-            color: var(--muted);
-            backdrop-filter: blur(12px);
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 20px;
-            padding: 0.3rem 0.8rem;
-            opacity: 0;
-            transform: translateX(10px);
-            transition: all 0.3s ease;
-            pointer-events: none;
-            white-space: nowrap;
-        }
-        #music-btn:hover ~ #music-label,
-        #music-btn.playing ~ #music-label { opacity: 1; transform: translateX(0); }
+  --font-display: "Space Grotesk", "Segoe UI", sans-serif;
+  --font-body: "Inter", "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", "SFMono-Regular", Consolas, monospace;
 
-        /* ── NAV ── */
-        nav {
-            position: sticky;
-            top: 0;
-            z-index: 50;
-            padding: 1.2rem 0;
-            backdrop-filter: blur(20px);
-            border-bottom: 1px solid var(--border);
-            background: rgba(5,10,21,0.7);
-        }
-        nav .wrapper {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .nav-logo {
-            font-family: 'Playfair Display', serif;
-            font-size: 1.3rem;
-            color: var(--heading);
-            letter-spacing: 0.05em;
-        }
-        .nav-logo span { color: var(--accent); }
-        .nav-links { display: flex; gap: 2rem; list-style: none; }
-        .nav-links a {
-            color: var(--muted);
-            text-decoration: none;
-            font-size: 0.78rem;
-            letter-spacing: 0.1em;
-            text-transform: uppercase;
-            transition: color 0.2s;
-        }
-        .nav-links a:hover { color: var(--accent); }
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-full: 999px;
 
-        /* ── HERO ── */
-        #hero {
-            min-height: 90vh;
-            display: flex;
-            align-items: center;
-            padding: 6rem 0 4rem;
-        }
-        .hero-inner {
-            display: grid;
-            grid-template-columns: 1fr auto;
-            gap: 4rem;
-            align-items: center;
-            width: 100%;
-        }
-        .hero-tag {
-            font-size: 0.72rem;
-            letter-spacing: 0.2em;
-            text-transform: uppercase;
-            color: var(--accent);
-            margin-bottom: 1.2rem;
-            opacity: 0;
-            animation: fadeUp 0.8s 0.2s forwards;
-        }
-        .hero-name {
-            font-family: 'Playfair Display', serif;
-            font-size: clamp(3rem, 8vw, 5.5rem);
-            font-weight: 700;
-            color: var(--heading);
-            line-height: 1.05;
-            opacity: 0;
-            animation: fadeUp 0.8s 0.4s forwards;
-        }
-        .hero-name em {
-            font-style: italic;
-            color: var(--accent);
-        }
-        .hero-desc {
-            margin-top: 1.5rem;
-            color: var(--muted);
-            max-width: 460px;
-            font-size: 0.88rem;
-            line-height: 1.8;
-            opacity: 0;
-            animation: fadeUp 0.8s 0.6s forwards;
-        }
-        .hero-email {
-            display: inline-block;
-            margin-top: 1.8rem;
-            font-size: 0.8rem;
-            color: var(--accent2);
-            text-decoration: none;
-            border-bottom: 1px solid rgba(192,132,252,0.3);
-            padding-bottom: 2px;
-            transition: border-color 0.2s;
-            opacity: 0;
-            animation: fadeUp 0.8s 0.8s forwards;
-        }
-        .hero-email:hover { border-color: var(--accent2); }
+  --content-width: 1120px;
+  --nav-height: 72px;
+  --transition-fast: 150ms ease;
+  --transition-base: 220ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 420ms cubic-bezier(0.16, 1, 0.3, 1);
+}
 
-        /* profile pic */
-        .hero-photo {
-            opacity: 0;
-            animation: fadeIn 1s 0.5s forwards;
-        }
-        .hero-photo img {
-            width: 160px;
-            height: 160px;
-            border-radius: 50%;
-            object-fit: cover;
-            object-position: center top;
-            border: 2px solid var(--border);
-            box-shadow: 0 0 0 8px rgba(127,219,202,0.06), 0 0 40px rgba(127,219,202,0.1);
-        }
+[data-theme="dark"] {
+  --color-bg: #0e1015;
+  --color-bg-elevated: #161922;
+  --color-bg-subtle: #1c2029;
+  --color-text: #e7e9ee;
+  --color-text-muted: #a3aab8;
+  --color-text-faint: #6b7280;
+  --color-border: #272b36;
+  --color-border-hover: #4b4780;
+  --color-accent: #8b87f5;
+  --color-accent-hover: #a5a1ff;
+  --color-accent-soft: rgba(139, 135, 245, 0.12);
+  --color-accent-contrast: #12141c;
+  --color-nav-bg: rgba(14, 16, 21, 0.82);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 6px 20px rgba(0, 0, 0, 0.35);
+  --shadow-lg: 0 20px 48px rgba(0, 0, 0, 0.45);
+}
 
-        @keyframes fadeUp {
-            from { opacity: 0; transform: translateY(24px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
+/* ---- Reset ------------------------------------------------------ */
+*, *::before, *::after { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
 
-        /* ── SECTION ── */
-        section { padding: 5rem 0; }
-        .section-label {
-            font-size: 0.7rem;
-            letter-spacing: 0.25em;
-            text-transform: uppercase;
-            color: var(--accent);
-            margin-bottom: 0.5rem;
-        }
-        .section-title {
-            font-family: 'Playfair Display', serif;
-            font-size: 2.2rem;
-            font-weight: 400;
-            color: var(--heading);
-            margin-bottom: 3rem;
-        }
+body {
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  transition: background var(--transition-base), color var(--transition-base);
+}
 
-        /* ── PROJECTS ── */
-        .projects-grid {
-            display: grid;
-            gap: 1.5rem;
-        }
-        .project-card {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 2rem;
-            display: grid;
-            grid-template-columns: 1fr auto;
-            gap: 1rem;
-            align-items: start;
-            transition: all 0.3s ease;
-            text-decoration: none;
-            color: inherit;
-            position: relative;
-            overflow: hidden;
-        }
-        .project-card::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(135deg, rgba(127,219,202,0.04), transparent);
-            opacity: 0;
-            transition: opacity 0.3s;
-        }
-        .project-card:hover { border-color: rgba(127,219,202,0.3); transform: translateY(-2px); }
-        .project-card:hover::before { opacity: 1; }
-        .project-num {
-            font-size: 0.65rem;
-            color: var(--accent);
-            letter-spacing: 0.15em;
-            margin-bottom: 0.6rem;
-            opacity: 0.7;
-        }
-        .project-title {
-            font-family: 'Playfair Display', serif;
-            font-size: 1.2rem;
-            color: var(--heading);
-            margin-bottom: 0.4rem;
-        }
-        .project-desc {
-            font-size: 0.8rem;
-            color: var(--muted);
-            line-height: 1.6;
-        }
-        .project-date {
-            font-size: 0.7rem;
-            color: var(--muted);
-            white-space: nowrap;
-            opacity: 0.6;
-        }
-        .project-arrow {
-            font-size: 1rem;
-            color: var(--accent);
-            margin-top: 0.3rem;
-            transition: transform 0.2s;
-        }
-        .project-card:hover .project-arrow { transform: translate(3px, -3px); }
+h1, h2, h3, h4 { font-family: var(--font-display); font-weight: 600; line-height: 1.15; margin: 0 0 0.5em; letter-spacing: -0.01em; }
+p { margin: 0 0 1em; color: var(--color-text-muted); }
+a { color: inherit; text-decoration: none; }
+img { max-width: 100%; display: block; }
+ul { list-style: none; margin: 0; padding: 0; }
+button { font-family: inherit; cursor: pointer; }
 
-        /* ── INTERESTS ── */
-        .tags {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.8rem;
-            margin-top: 1.5rem;
-        }
-        .tag {
-            font-size: 0.75rem;
-            letter-spacing: 0.08em;
-            padding: 0.4rem 1rem;
-            border-radius: 100px;
-            border: 1px solid var(--border);
-            background: var(--surface);
-            color: var(--muted);
-            transition: all 0.2s;
-        }
-        .tag:hover { border-color: var(--accent); color: var(--accent); }
+:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 3px; border-radius: 4px; }
 
-        /* ── FOOTER ── */
-        footer {
-            border-top: 1px solid var(--border);
-            padding: 2.5rem 0;
-            color: var(--muted);
-            font-size: 0.75rem;
-        }
-        footer .wrapper {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
+.container { width: 100%; max-width: var(--content-width); margin: 0 auto; padding: 0 24px; }
 
-        /* ── SCROLLBAR ── */
-        ::-webkit-scrollbar { width: 4px; }
-        ::-webkit-scrollbar-track { background: var(--bg); }
-        ::-webkit-scrollbar-thumb { background: rgba(127,219,202,0.2); border-radius: 2px; }
+.visually-hidden {
+  position: absolute; width: 1px; height: 1px; overflow: hidden;
+  clip: rect(0 0 0 0); white-space: nowrap;
+}
 
-        /* ── RESPONSIVE ── */
-        @media (max-width: 640px) {
-            .hero-inner { grid-template-columns: 1fr; }
-            .hero-photo { order: -1; }
-            .hero-photo img { width: 100px; height: 100px; }
-            .nav-links { gap: 1rem; }
-            footer .wrapper { flex-direction: column; gap: 0.5rem; text-align: center; }
-        }
-    </style>
+/* ---- Type helpers ------------------------------------------------ */
+.eyebrow {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-family: var(--font-mono); font-size: 0.8rem; color: var(--color-accent);
+  text-transform: lowercase; letter-spacing: 0.01em; margin-bottom: 12px;
+}
+
+.section { padding: 88px 0; }
+.section-head { max-width: 640px; margin: 0 0 48px; }
+.section-head h2 { font-size: clamp(1.6rem, 2.4vw, 2.1rem); margin-bottom: 12px; }
+.section-head p { margin: 0; }
+.page-title { font-family: var(--font-display); font-size: clamp(1.8rem, 3.2vw, 2.4rem); margin-bottom: 12px; }
+
+/* ---- Buttons ------------------------------------------------------ */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 12px 22px; border-radius: var(--radius-full); font-weight: 600; font-size: 0.95rem;
+  border: 1px solid transparent;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast),
+    background var(--transition-fast), border-color var(--transition-fast);
+  white-space: nowrap;
+}
+.btn:hover { transform: translateY(-2px); }
+.btn:active { transform: translateY(0); }
+.btn-primary { background: var(--color-accent); color: var(--color-accent-contrast); box-shadow: var(--shadow-sm); }
+.btn-primary:hover { background: var(--color-accent-hover); box-shadow: var(--shadow-md); }
+.btn-secondary { background: var(--color-bg-elevated); color: var(--color-text); border-color: var(--color-border); }
+.btn-secondary:hover { border-color: var(--color-accent); color: var(--color-accent); }
+.btn-row { display: flex; flex-wrap: wrap; gap: 14px; }
+
+/* ---- Navigation ------------------------------------------------------ */
+.site-nav {
+  position: sticky; top: 0; z-index: 100; height: var(--nav-height);
+  display: flex; align-items: center; background: var(--color-nav-bg);
+  backdrop-filter: blur(10px); border-bottom: 1px solid var(--color-border);
+}
+.site-nav .container { display: flex; align-items: center; justify-content: space-between; }
+.nav-logo {
+  font-family: var(--font-mono); font-size: 1rem; font-weight: 500; color: var(--color-text);
+  display: inline-flex; align-items: center; gap: 2px; background: none; border: none; padding: 0;
+}
+.nav-logo .nav-logo-accent { color: var(--color-accent); }
+.nav-links { display: flex; align-items: center; gap: 4px; }
+.nav-links button {
+  position: relative; padding: 8px 4px; margin: 0 12px; font-size: 0.95rem; font-weight: 500;
+  color: var(--color-text-muted); background: none; border: none;
+  transition: color var(--transition-fast);
+}
+.nav-links button::after {
+  content: ""; position: absolute; left: 0; right: 100%; bottom: 0; height: 2px;
+  background: var(--color-accent); border-radius: 2px; transition: right var(--transition-base);
+}
+.nav-links button:hover { color: var(--color-text); }
+.nav-links button:hover::after { right: 0; }
+.nav-links button[aria-current="page"] { color: var(--color-text); }
+.nav-links button[aria-current="page"]::after { right: 0; }
+
+.nav-right { display: flex; align-items: center; gap: 10px; }
+.theme-toggle, .nav-toggle {
+  display: inline-flex; align-items: center; justify-content: center; width: 38px; height: 38px;
+  border-radius: var(--radius-full); background: var(--color-bg-elevated); border: 1px solid var(--color-border);
+  color: var(--color-text); transition: border-color var(--transition-fast), color var(--transition-fast);
+}
+.theme-toggle:hover, .nav-toggle:hover { border-color: var(--color-accent); color: var(--color-accent); }
+.theme-toggle svg, .nav-toggle svg { width: 18px; height: 18px; }
+.theme-toggle .icon-sun { display: none; }
+[data-theme="dark"] .theme-toggle .icon-sun { display: block; }
+[data-theme="dark"] .theme-toggle .icon-moon { display: none; }
+.nav-toggle { display: none; border-radius: var(--radius-sm); }
+
+/* ---- Views (Home / About / Blog / Projects) ------------------------ */
+.view { display: none; }
+.view.is-active { display: block; }
+
+/* ---- Hero (Home) ----------------------------------------------------- */
+.hero { padding: 88px 0 64px; }
+.hero .container { display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 56px; align-items: center; }
+.hero-name { font-size: clamp(2.4rem, 5vw, 3.6rem); margin-bottom: 8px; }
+.hero-title { font-family: var(--font-mono); font-size: clamp(0.95rem, 1.6vw, 1.15rem); color: var(--color-text-muted); margin-bottom: 22px; min-height: 1.6em; }
+.hero-title .cursor {
+  display: inline-block; width: 2px; height: 1em; background: var(--color-accent);
+  margin-left: 3px; vertical-align: -0.15em; animation: blink 1s step-end infinite;
+}
+.hero-intro { font-size: 1.08rem; max-width: 46ch; margin-bottom: 32px; }
+.hero-avatar-wrap { display: flex; justify-content: center; }
+
+.avatar {
+  position: relative; width: 240px; height: 240px; border-radius: var(--radius-lg);
+  background: var(--color-accent-soft); border: 1px solid var(--color-border);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-display); font-size: 3.2rem; font-weight: 600; color: var(--color-accent);
+  box-shadow: var(--shadow-lg); overflow: hidden;
+}
+.avatar img { width: 100%; height: 100%; object-fit: cover; }
+.avatar::before {
+  content: ""; position: absolute; inset: -1px; border-radius: inherit; padding: 1px;
+  background: conic-gradient(from 0deg, var(--color-accent), transparent 30%, transparent 70%, var(--color-accent));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor; mask-composite: exclude;
+  animation: spin 6s linear infinite; opacity: 0.5;
+}
+.about-avatar { width: 200px; height: 200px; font-size: 2.6rem; }
+
+/* ---- Cards (projects / blog / quick-nav) ---------------------------- */
+.card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; }
+
+.card {
+  background: var(--color-bg-elevated); border: 1px solid var(--color-border); border-radius: var(--radius-md);
+  padding: 28px; box-shadow: var(--shadow-sm);
+  transition: transform var(--transition-base), box-shadow var(--transition-base), border-color var(--transition-base);
+  display: flex; flex-direction: column; height: 100%;
+}
+.card:hover { transform: translateY(-6px); box-shadow: var(--shadow-lg); border-color: var(--color-border-hover); }
+
+.project-card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+.project-card h3 { font-size: 1.15rem; margin: 0; }
+.project-card p { font-size: 0.95rem; flex: 1; }
+
+.icon-link {
+  display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px;
+  border-radius: var(--radius-full); color: var(--color-text-muted); border: 1px solid var(--color-border); flex-shrink: 0;
+  transition: color var(--transition-fast), border-color var(--transition-fast), transform var(--transition-fast);
+}
+.icon-link:hover { color: var(--color-accent); border-color: var(--color-accent); transform: translateY(-2px); }
+.icon-link svg { width: 16px; height: 16px; }
+
+.tag-row { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0 0; }
+.tag { font-family: var(--font-mono); font-size: 0.75rem; padding: 4px 10px; border-radius: var(--radius-full); background: var(--color-accent-soft); color: var(--color-accent); white-space: nowrap; }
+.tag-muted { background: var(--color-bg-subtle); color: var(--color-text-muted); }
+.card-links { display: flex; gap: 10px; margin-top: 18px; }
+
+.nav-card { padding: 32px 28px; display: block; background: var(--color-bg-elevated); border: 1px solid var(--color-border); border-radius: var(--radius-md); }
+.nav-card .nav-card-icon {
+  width: 44px; height: 44px; border-radius: var(--radius-sm); background: var(--color-accent-soft); color: var(--color-accent);
+  display: flex; align-items: center; justify-content: center; margin-bottom: 18px; transition: transform var(--transition-base);
+}
+.nav-card:hover .nav-card-icon { transform: scale(1.08) rotate(-4deg); }
+.nav-card h3 { font-size: 1.1rem; margin-bottom: 6px; }
+.nav-card p { font-size: 0.92rem; margin: 0; }
+.nav-card-arrow { margin-top: 16px; display: inline-flex; align-items: center; gap: 6px; font-size: 0.85rem; font-weight: 600; color: var(--color-accent); font-family: var(--font-mono); }
+.nav-card-arrow svg { width: 14px; height: 14px; transition: transform var(--transition-base); }
+.nav-card:hover .nav-card-arrow svg { transform: translateX(4px); }
+
+.blog-card-meta { display: flex; align-items: center; gap: 10px; font-family: var(--font-mono); font-size: 0.78rem; color: var(--color-text-faint); margin-bottom: 12px; }
+.blog-card h3 { font-size: 1.2rem; margin-bottom: 8px; }
+.blog-card p { font-size: 0.95rem; }
+.read-more { margin-top: auto; padding-top: 16px; display: inline-flex; align-items: center; gap: 6px; font-weight: 600; font-size: 0.9rem; color: var(--color-accent); background: none; border: none; }
+.read-more svg { width: 14px; height: 14px; transition: transform var(--transition-base); }
+.blog-card:hover .read-more svg { transform: translateX(4px); }
+
+/* ---- Filter bar (Projects) ------------------------------------------ */
+.filter-bar { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 40px; }
+.filter-btn {
+  font-family: var(--font-mono); font-size: 0.82rem; padding: 9px 18px; border-radius: var(--radius-full);
+  border: 1px solid var(--color-border); background: var(--color-bg-elevated); color: var(--color-text-muted);
+  transition: all var(--transition-fast);
+}
+.filter-btn:hover { color: var(--color-text); border-color: var(--color-accent); }
+.filter-btn[aria-pressed="true"] { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-accent-contrast); }
+
+/* ---- About page ------------------------------------------------------- */
+.about-hero { display: grid; grid-template-columns: 220px 1fr; gap: 48px; align-items: start; margin-bottom: 24px; }
+.skills-groups { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 28px; }
+.skills-group h3 { font-family: var(--font-mono); font-size: 0.85rem; text-transform: lowercase; color: var(--color-text-faint); font-weight: 500; margin-bottom: 14px; }
+.skills-tags { display: flex; flex-wrap: wrap; gap: 8px; }
+.skill-badge {
+  font-size: 0.85rem; padding: 7px 14px; border-radius: var(--radius-sm); background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border); color: var(--color-text); transition: border-color var(--transition-fast), transform var(--transition-fast);
+}
+.skill-badge:hover { border-color: var(--color-accent); transform: translateY(-2px); }
+
+
+.coding-profiles {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  max-width: 380px;
+  justify-self: center;
+}
+
+.coding-profile-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+
+  padding: 22px;
+
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border);
+
+  border-radius: var(--radius-md);
+
+  text-decoration: none;
+  color: var(--color-text);
+
+  box-shadow: var(--shadow-sm);
+
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.25s ease,
+    border-color 0.25s ease;
+}
+
+.coding-profile-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-lg);
+  border-color: var(--color-accent);
+}
+
+.coding-profile-icon {
+  width: 50px;
+  height: 50px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 12px;
+
+  background: var(--color-accent-soft);
+  color: var(--color-accent);
+
+  font-family: var(--font-mono);
+  font-weight: bold;
+}
+
+.coding-profile-card > div:nth-child(2) {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.coding-profile-name {
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.coding-profile-desc {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}
+
+.coding-arrow {
+  color: var(--color-accent);
+  font-size: 1.2rem;
+}
+
+
+
+.hero .container {
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+}
+
+
+
+@media (max-width: 768px) {
+
+  .hero .container {
+    grid-template-columns: 1fr;
+  }
+
+  .coding-profiles {
+    max-width: 100%;
+  }
+
+}
+
+
+.timeline { position: relative; margin-left: 8px; padding-left: 32px; border-left: 2px solid var(--color-border); }
+.timeline-item { position: relative; padding-bottom: 36px; }
+.timeline-item:last-child { padding-bottom: 0; }
+.timeline-item::before {
+  content: ""; position: absolute; left: -38px; top: 4px; width: 12px; height: 12px; border-radius: 50%;
+  background: var(--color-bg); border: 2px solid var(--color-accent);
+}
+.timeline-period { font-family: var(--font-mono); font-size: 0.78rem; color: var(--color-accent); margin-bottom: 6px; display: block; }
+.timeline-item h3 { font-size: 1.05rem; margin-bottom: 2px; }
+.timeline-org { font-size: 0.9rem; color: var(--color-text-faint); margin-bottom: 8px; display: block; }
+.timeline-item p { font-size: 0.92rem; margin: 0; }
+
+/* ---- Blog post detail --------------------------------------------------- */
+.post-header { max-width: 700px; margin: 0 auto 40px; }
+.post-header h1 { font-size: clamp(1.8rem, 3.4vw, 2.4rem); }
+.post-body { max-width: 700px; margin: 0 auto; font-size: 1.05rem; }
+.post-body p { color: var(--color-text); margin-bottom: 1.3em; }
+.back-link {
+  display: inline-flex; align-items: center; gap: 6px; font-family: var(--font-mono); font-size: 0.85rem;
+  color: var(--color-text-muted); margin-bottom: 28px; background: none; border: none; transition: color var(--transition-fast);
+}
+.back-link:hover { color: var(--color-accent); }
+.back-link svg { width: 14px; height: 14px; }
+
+/* ---- Footer --------------------------------------------------------------- */
+.site-footer { border-top: 1px solid var(--color-border); padding: 40px 0; margin-top: 64px; }
+.site-footer .container { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; }
+.footer-note { font-size: 0.85rem; color: var(--color-text-faint); margin: 0; }
+.footer-socials { display: flex; gap: 10px; }
+
+/* ---- Scroll-reveal + animations -------------------------------------------- */
+.reveal { opacity: 0; transform: translateY(18px); transition: opacity var(--transition-slow), transform var(--transition-slow); }
+.reveal.is-visible { opacity: 1; transform: translateY(0); }
+.fade-in { animation: fadeIn var(--transition-slow) both; }
+
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important; animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important; scroll-behavior: auto !important;
+  }
+  .reveal { opacity: 1; transform: none; }
+}
+
+.empty-state { text-align: center; padding: 64px 24px; color: var(--color-text-faint); font-family: var(--font-mono); font-size: 0.95rem; grid-column: 1 / -1; }
+
+/* ---- Responsive ------------------------------------------------------------- */
+@media (max-width: 860px) {
+  .hero .container { grid-template-columns: 1fr; text-align: left; }
+  .hero-avatar-wrap { order: -1; justify-content: flex-start; }
+  .avatar { width: 140px; height: 140px; font-size: 2rem; }
+  .about-hero { grid-template-columns: 1fr; }
+  .about-avatar { width: 120px; height: 120px; font-size: 1.8rem; }
+}
+
+@media (max-width: 720px) {
+  .nav-toggle { display: inline-flex; }
+  .nav-links {
+    position: absolute; top: var(--nav-height); left: 0; right: 0; background: var(--color-bg-elevated);
+    border-bottom: 1px solid var(--color-border); flex-direction: column; align-items: stretch;
+    padding: 8px 24px 20px; gap: 0; box-shadow: var(--shadow-md); display: none;
+  }
+  .nav-links.is-open { display: flex; }
+  .nav-links button { margin: 0; padding: 14px 4px; border-bottom: 1px solid var(--color-border); width: 100%; text-align: left; }
+  .nav-links button::after { display: none; }
+  .nav-links button:last-child { border-bottom: none; }
+  .section { padding: 56px 0; }
+  .hero { padding: 48px 0 40px; }
+}
+
+@media (max-width: 520px) {
+  .site-footer .container { flex-direction: column; align-items: flex-start; }
+}
+</style>
 </head>
 <body>
 
-<!-- Nebula effects -->
-<div class="nebula nebula-1"></div>
-<div class="nebula nebula-2"></div>
-<div class="nebula nebula-3"></div>
+<!-- ================================================================
+     HTML STRUCTURE
+     ================================================================ -->
 
-<!-- Starfield -->
-<canvas id="starfield"></canvas>
+<a class="visually-hidden" href="#home">Skip to main content</a>
 
-<!-- Music button -->
-<button id="music-btn" title="Toggle Für Elise">♪</button>
-<div id="music-label">Für Elise — Beethoven</div>
+<!-- ---- Site navigation (shared across all views) ---- -->
+<header class="site-nav">
+  <div class="container">
+    <button class="nav-logo" type="button" data-nav-to="home">~/<span class="nav-logo-accent" data-bind="name"></span></button>
 
-<!-- Nav -->
-<nav>
-    <div class="wrapper">
-        <div class="nav-logo">Pratim<span>.</span></div>
-        <ul class="nav-links">
-            <li><a href="#about">About</a></li>
-            <li><a href="#projects">Projects</a></li>
-        </ul>
+    <nav aria-label="Primary">
+      <ul class="nav-links" data-nav-links>
+        <li><button type="button" data-nav-to="home">Home</button></li>
+        <li><button type="button" data-nav-to="about">About</button></li>
+        <li><button type="button" data-nav-to="blog">Blog</button></li>
+        <li><button type="button" data-nav-to="projects">Projects</button></li>
+      </ul>
+    </nav>
+
+    <div class="nav-right">
+      <button class="theme-toggle" type="button" data-theme-toggle aria-label="Toggle dark mode">
+        <span class="icon-sun"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4.5"/><path d="M12 2.5v2M12 19.5v2M4.6 4.6l1.4 1.4M18 18l1.4 1.4M2.5 12h2M19.5 12h2M4.6 19.4 6 18M18 6l1.4-1.4"/></svg></span>
+        <span class="icon-moon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.3A8 8 0 1 1 9.7 4a6.4 6.4 0 0 0 10.3 10.3Z"/></svg></span>
+      </button>
+      <button class="nav-toggle" type="button" data-nav-toggle aria-label="Open menu" aria-expanded="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      </button>
     </div>
-</nav>
+  </div>
+</header>
 
-<!-- Hero -->
-<div class="wrapper">
-    <section id="about">
-        <div id="hero">
-            <div class="hero-inner">
-                <div>
-                    <h1 class="hero-name">Pratim<br><em>Chakraborty</em></h1>
-                    <p class="hero-desc">
-                        I am interested in competitive programming, low level sytem architechture , networking , operating systems as well as developing low latency software.
-                        I really love solving difficult problems.    
-                                   </p>
-                    <a class="hero-email" href="mailto:aryanpratim86@gmail.com">aryanpratim86@gmail.com</a>
-                </div>
-                <div class="hero-photo">
-                    <img src="ssl.jpg" alt="Pratim Aryan">
-                </div>
-            </div>
+<main id="main">
+
+  <!-- ============================= HOME VIEW ============================= -->
+  <section class="view" id="view-home" data-view="home">
+    <div class="hero">
+      <div class="container">
+        <div class="hero-text fade-in">
+          <h1 class="hero-name" data-bind="name">Portolio</h1>
+          <p class="hero-title" data-slot="hero-title"></p>
+          <p class="hero-intro" data-bind="shortIntro"></p>
+          <div class="btn-row">
+            <button class="btn btn-primary" type="button" data-nav-to="projects">View Projects</button>
+            <button class="btn btn-secondary" type="button" data-nav-to="blog">Read My Blog</button>
+            <button class="btn btn-secondary" type="button" data-nav-to="about">About Me</button>
+          </div>
         </div>
+        <div class="coding-profiles fade-in">
 
-        <!-- Interests -->
-        <div>
-            <p class="section-label" style="margin-top: 1.5rem;">Languages</p>
-            <div class="tags">
-                <span class="tag">C++ </span>
-                <span class="tag">Python</span>
-                <span class="tag">Typescript / Javacript </span>
-                <span class="tag">node.js</span>
-            </div>
-            </div>
+  <a 
+    href="https://leetcode.com/u/Johanlbrt99/"
+    target="_blank"
+    rel="noopener noreferrer"
+    class="coding-profile-card"
+  >
+    <div class="coding-profile-icon">LC</div>
 
-            <div>
-            <p class="section-label" style="margin-top: 1.5rem;">Frameworks</p>
-            <div class="tags">
-                <span class="tag">React</span>
-                <span class="tag">Next</span>
-                <span class="tag">gRPC</span>
-            </div>
-        </div>
+    <div>
+      <span class="coding-profile-name">LeetCode</span>
+      <span class="coding-profile-desc">
+        Algorithms & Problem Solving
+      </span>
+    </div>
 
-
-        <div>
-
-            <p class="section-label" style="margin-top: 1.5rem;">Backend / databse</p>
-            <div class="tags">
-                <span class="tag"> mySQL </span>
-                <span class="tag">graphQl</span>
-                </div>
-        </div>
+    <span class="coding-arrow">↗</span>
+  </a>
 
 
-        <div>
-            <p class="section-label" style="margin-top: 1.5rem;"> Tools </p>
-            <div class="tags">
-            <span class="tag">git bash</span>
-            <span class="tag">git lab</span>
-            <span class="tag"> Cmake </span>
-            <span class="tag">boost/asio</span>
-            <span class="tag">Vim and tmux</span>
-            <span class="tag">Visual studio </span>
-                </div>
-        </div>
-    </section>
+  <a 
+    href="https://codeforces.com/profile/googlecracker99"
+    target="_blank"
+    rel="noopener noreferrer"
+    class="coding-profile-card"
+  >
+    <div class="coding-profile-icon">CF</div>
 
-    <!-- Projects -->
-    <section id="projects">
-        <p class="section-label">Selected Work</p>
-        <h2 class="section-title">Projects</h2>
-        <div class="projects-grid">  
-             <a class="project-card" href="https://github.com/pratim994/Pycraft" target="_blank" rel="noopener">
-                <div>
-                    <p class="project-num"> January 2026</p>
-                    <h3 class="project-title">PyCraft</h3>
-                    <p class="project-desc">Developed a minecraft inspired real-time infinite 3D terrain generation and rendering engine using Python, Pygame,
-PyOpenGL, and ModernGL</p>
-                </div>
-                <div>
-                    <p class="project-date">cython PyOPenGL</p>
-                    <p class="project-arrow">↗</p>
-                </div>
-            </a>
+    <div>
+      <span class="coding-profile-name">Codeforces</span>
+      <span class="coding-profile-desc">
+        Competitive Programming
+      </span>
+    </div>
 
+    <span class="coding-arrow">↗</span>
+  </a>
 
-
-
-
-            <a class="project-card" href="https://github.com/pratim994/Python-BitTorrent-client" target="_blank" rel="noopener">
-                <div>
-                    <p class="project-num"> December 2025</p>
-                    <h3 class="project-title">Python BitTorrent Client</h3>
-                    <p class="project-desc">A fully functional BitTorrent client built in Python, implementing the peer-to-peer file transfer protocol from scratch, hash size calculation , peer choke and unchoke mechanism.</p>
-                </div>
-                <div>
-                    <p class="project-date">Python , urllib and ayncio </p>
-                    <p class="project-arrow">↗</p>
-                </div>
-            </a>
-
-            <a class="project-card" href="https://github.com/pratim994/webby-http-server" target="_blank" rel="noopener">
-                <div>
-                    <p class="project-num"> November 2025</p>
-                    <h3 class="project-title">C++ HTTP Server</h3>
-                    <p class="project-desc">A HTTP server written in C++ using sockets and winsock API .</p>
-                </div>
-                <div>
-                    <p class="project-date">C++ ,sockets and tcp/ip </p>
-                    <p class="project-arrow">↗</p>
-                </div>
-            </a>
-
-            <a class="project-card" href="https://github.com/pratim994/TTS" target="_blank" rel="noopener">
-                <div>
-                    <p class="project-num">October 2025</p>
-                    <h3 class="project-title">Text-to-Speech Converter</h3>
-                    <p class="project-desc">A text-to-speech engine converting written text into natural-sounding audio output.</p>
-                </div>
-                <div>
-                    <p class="project-date">gradio coqui python</p>
-                    <p class="project-arrow">↗</p>
-                </div>
-            </a>
-
-        </div>
-    </section>
 </div>
-
-<footer>
-    <div class="wrapper">
+      </div>
     </div>
+
+    <section class="section">
+      <div class="container">
+        <div class="section-head reveal">
+          <span class="eyebrow">featured projects</span>
+          <h2>A few things I've built</h2>
+          <p>A mix of backend systems, small tools, and side projects. More on the
+            <button type="button" data-nav-to="projects" style="color: var(--color-accent); font-weight: 600; background: none; border: none; padding: 0; text-decoration: underline;">Projects page</button>.
+          </p>
+        </div>
+        <div class="card-grid" data-slot="featured-projects"></div>
+      </div>
+    </section>
+
+    <section class="section" style="padding-top: 0;">
+      <div class="container">
+        <div class="section-head reveal">
+          <span class="eyebrow">get around</span>
+          <h2>Explore the site</h2>
+        </div>
+        <div class="card-grid" data-slot="quick-nav"></div>
+      </div>
+    </section>
+  </section>
+
+  <!-- ============================= ABOUT VIEW ============================= -->
+  <section class="view" id="view-about" data-view="about">
+    <section class="section" style="padding-bottom: 48px;">
+      <div class="container">
+        <div class="about-hero fade-in">
+          <div class="avatar about-avatar" data-slot="about-avatar"></div>
+          <div>
+            <span class="eyebrow">$WHOAMI</span>
+            <h1 style="font-size: clamp(1.8rem, 3.4vw, 2.6rem); margin-bottom: 16px;">Hi, I'm <span data-bind="name">YOUR_NAME</span>.</h1>
+            <div data-slot="bio"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" style="padding-top: 0;">
+      <div class="container">
+        <div class="section-head reveal">
+          <span class="eyebrow">developer journey</span>
+          <h2>How I got here</h2>
+        </div>
+        <div class="reveal" data-slot="journey"></div>
+      </div>
+    </section>
+
+    <section class="section" style="padding-top: 0;">
+      <div class="container">
+        <div class="section-head reveal">
+          <span class="eyebrow">skills</span>
+          <h2>What I work with</h2>
+        </div>
+        <div class="skills-groups" data-slot="skills-groups"></div>
+      </div>
+    </section>
+
+    <section class="section" style="padding-top: 0;">
+      <div class="container">
+        <div class="section-head reveal">
+          <span class="eyebrow">experience</span>
+          <h2>Timeline</h2>
+        </div>
+        <div class="timeline" data-slot="timeline"></div>
+      </div>
+    </section>
+  </section>
+
+  <!-- ============================= BLOG VIEW ============================= -->
+  <section class="view" id="view-blog" data-view="blog">
+    <section class="section">
+      <div class="container" data-slot="blog-container">
+        <!-- Populated by JS: either the post list, or a single post's detail -->
+      </div>
+    </section>
+  </section>
+
+  <!-- ============================= PROJECTS VIEW ============================= -->
+  <section class="view" id="view-projects" data-view="projects">
+    <section class="section">
+      <div class="container">
+        <div class="section-head fade-in">
+          <span class="eyebrow">projects</span>
+          <h1 class="page-title">Things I've built</h1>
+          <p>Filter by category, or browse everything below. Each project links to its source on GitHub.</p>
+        </div>
+        <div class="filter-bar fade-in" data-slot="filter-bar" role="group" aria-label="Filter projects by category"></div>
+        <div class="card-grid" data-slot="projects-grid"></div>
+      </div>
+    </section>
+  </section>
+
+</main>
+
+<footer class="site-footer">
+  <div class="container">
+    <p class="footer-note"></p>
+    <div class="footer-socials" data-slot="footer-socials"></div>
+  </div>
 </footer>
 
-<!-- ── SCRIPTS ── -->
 <script>
-// ── STARFIELD ──
-(function() {
-    const canvas = document.getElementById('starfield');
-    const ctx = canvas.getContext('2d');
-    let W, H, stars = [], shootingStars = [];
+// ================================================================
+// JAVASCRIPT LOGIC
+// ================================================================
 
-    function resize() {
-        W = canvas.width = window.innerWidth;
-        H = canvas.height = window.innerHeight;
-    }
+(function () {
+  "use strict";
 
-    function initStars() {
-        stars = [];
-        for (let i = 0; i < 280; i++) {
-            stars.push({
-                x: Math.random() * W,
-                y: Math.random() * H,
-                r: Math.random() * 1.4 + 0.2,
-                alpha: Math.random() * 0.7 + 0.2,
-                speed: Math.random() * 0.03 + 0.005,
-                twinkleDir: Math.random() > 0.5 ? 1 : -1
-            });
-        }
-    }
+  /* ==============================================================
+     1. SITE DATA — edit everything in this block to make the
+        site your own. Nothing below this block needs to change
+        for day-to-day edits (names, bio, projects, blog posts...).
+     ============================================================== */
+  var GITHUB_USERNAME = "pratim994";
 
-    function spawnShootingStar() {
-        shootingStars.push({
-            x: Math.random() * W * 0.6 + W * 0.2,
-            y: Math.random() * H * 0.4,
-            vx: (Math.random() * 4 + 3),
-            vy: (Math.random() * 2 + 1),
-            len: Math.random() * 120 + 80,
-            alpha: 1,
-            life: 1
-        });
-    }
+  var profile = {
+    name: "Pratim Chakraborty",
+    initials: "PC", 
+    title: "Software Engineer | Backend Developer | Performance Freak",
+    shortIntro: "I am a backend developer by day and a performance freak by night, focused on building low-latency, scalable systems from scratch.",
+    bio: [
+      "I have been programming in Python and modern C++ (C++20) since junior high, and I am deeply curious about how systems work under the hood. My technical focus lies in designing and building scalable backend solutions from scratch.",
+      "My tech stack includes Python, TypeScript, Django, and DRF, but I am flexible and comfortable diving into dynamic codebases and various technologies. Whether it is engineering a high-performance pipeline with a custom allocator processing market data under 100 ns, or containerizing workloads with Docker, I love writing dependable, low-latency applications.",
+      "When I am not working or learning, I like to do competitive programming, go for hikes, play my acoustic guitar, go to the gym, and meet up with friends. I am always looking forward to working and growing together."
+    ],
+    journey: [
+      "My path into software engineering began early with competitive programming, problem-solving on platforms like LeetCode and Codeforces, and pushing the limits of system performance.",
+      "Over time, my work expanded into infrastructure and deployment—ranging from configuring VPS instances and managing AWS S3 to orchestrating automated monitoring scripts with bash, Zsh, and PowerShell."
+    ],
+    email: "aryanpratim86@gmail.com",
+    linkedin: "https://www.linkedin.com/in/pratim-chakraborty-77a762216/",
+    twitter: "https://x.com/pratim_aryan" 
+  };
 
-    function draw() {
-        ctx.clearRect(0, 0, W, H);
+  var socialLinks = [
+    { label: "GitHub", url: "https://github.com/" + GITHUB_USERNAME, icon: "github" },
+    { label: "LinkedIn", url: "" + profile.linkedin, icon: "linkedin" },
+    { label: "Email", url: "mailto:" + profile.email, icon: "mail" }
+  ].concat(profile.twitter ? [{ label: "Twitter", url: "https://twitter.com/" + profile.twitter, icon: "twitter" }] : []);
 
-        // Stars
-        stars.forEach(s => {
-            s.alpha += s.speed * s.twinkleDir;
-            if (s.alpha > 0.9 || s.alpha < 0.1) s.twinkleDir *= -1;
-            ctx.beginPath();
-            ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
-            ctx.fillStyle = `rgba(200, 220, 255, ${s.alpha})`;
-            ctx.fill();
-        });
+  var skills = {
+    "Languages": ["Python", "C++" ,"Bash/Shell" , "TypeScript/Javascript", "Java"],
+    "Backend": [ "Django", "Django REST Framework", "REST APIs", "Websockets", "webhooks" , "webRTC",  "gRPC", "Protocol Buffers"],
+    "Frontend": ["React", "Vue", "HTML5", "CSS3", "Tailwind CSS"],
+    "Messaging & Asynchronous Systems" : ["celery", "kafka","RabbitMQ","ZeroMQ", "Redis Pub Sub"],
+    "Databases": ["PostgreSQL", "MongoDB", "Cassandra", "TimescaleDB","InfluxDB"],
+    "Infrastructure & DevOps": ["Docker", "Nginx", "AWS", "Git", "Gitlab", "Linux", "Vim"],
+    "Observability" : ["Prometheus", "Grafana", "ELK Stack / Elasticsearch", "Kibana", "Logstash"],
+    "Testing & Build Tools" : ["pytest", "GoogleTest", "CMake", "Poetry"]
+  };
 
-        // Shooting stars
-        shootingStars.forEach((ss, i) => {
-            ss.x += ss.vx;
-            ss.y += ss.vy;
-            ss.life -= 0.015;
-            const grad = ctx.createLinearGradient(ss.x, ss.y, ss.x - ss.vx * (ss.len / ss.vx), ss.y - ss.vy * (ss.len / ss.vx));
-            grad.addColorStop(0, `rgba(180, 240, 255, ${ss.life})`);
-            grad.addColorStop(1, 'rgba(180, 240, 255, 0)');
-            ctx.beginPath();
-            ctx.moveTo(ss.x, ss.y);
-            ctx.lineTo(ss.x - ss.vx * 12, ss.y - ss.vy * 12);
-            ctx.strokeStyle = grad;
-            ctx.lineWidth = 1.5;
-            ctx.stroke();
-            if (ss.life <= 0) shootingStars.splice(i, 1);
-        });
+  var experience = [
+    { role: "Software Engineer", org: "TCS", period: "2026 — Present", description: "Lead a team of 24 engineers, built an telemetry application from scratch using django and postgres at backend, rest apis and react at the frontend. Integerated custom buissness logic with fine tuned open source AI models, generated unique recommendations for each users." },
+    { role: "Software Engineer Intern", org: "Health Hood", period: "2025 — 2026", description: "Worked on authentication , IAM and client dashboard using next.js, resolved critical bugs that led to priviledge escalation" },
+    { role: "B.S. in Computer Science", org: "RKMVCC Rahara", period: "2022— 2025", description: "Focused on Operating Systems, Computer architecture, networking, automata and deep learning theory. Pioneered hackathons o our college" }
+  ];
 
-        requestAnimationFrame(draw);
-    }
+  // "category" powers the Projects page filter buttons — use web / backend /
+  // algorithms / ml, or add your own; new categories appear automatically.
+  // Set "featured: true" on 3–6 projects to also show them on the Home page.
+  var projects = [
+   // { slug: "task-queue", name: "Distributed Task Queue", description: "A lightweight, Redis-backed job queue with retries, priorities, and a small dashboard for watching workers in real time.", tech: ["Go", "Redis", "Docker"], category: "backend", github: "https://github.com/" + GITHUB_USERNAME + "/task-queue", demo: "", featured: true },
+    { slug: "Trading application", name: "Low latency trading application", description: "A C++ matching engine with custom multicast UDP and TCP socket, order gateway and order managament, trading strategy and simulation of market data.Used lock free data structure, avoided heap allocation in hot path", tech: ["C++ 20", "linux", "python", "sockets"], category: "Systems", github: "https://github.com/" + GITHUB_USERNAME + "/Low-latency-trading-engine", demo: "", featured: true },
 
-    resize();
-    initStars();
-    window.addEventListener('resize', () => { resize(); initStars(); });
-    setInterval(spawnShootingStar, 3500);
-    draw();
-})();
-</script>
+    //{ slug: "expense-tracker", name: "Expense Tracker", description: "A full-stack budgeting app with recurring transactions, category breakdowns, and CSV import for bank statements.", tech: ["React", "Node.js", "PostgreSQL"], category: "web", github: "https://github.com/" + GITHUB_USERNAME + "/expense-tracker", demo: "https://example.com", featured: true },
+    { slug: "pycraft", name: "Pycraft", description: "Pycraft is a lightweight Python game engine designed for experimenting with 3D rendering, procedural terrain generation, shaders, and basic game mechanics. It serves as a learning-focused engine for graphics programming and game development", tech: ["Python", "PyOpengl", "Numba JIT"], category: "Algorithms", github: "https://github.com/" + GITHUB_USERNAME + "/Pycraft", demo: "", featured: true },
 
-<script>
-// ── FÜR ELISE (Web Audio API) ──
-(function() {
-    let ctx, playing = false, scheduledNodes = [], loopTimeout;
-    const btn = document.getElementById('music-btn');
+    //{ slug: "pathfinding-visualizer", name: "Pathfinding Visualizer", description: "An interactive grid for watching A*, Dijkstra, and BFS race each other to solve a maze, one step at a time.", tech: ["TypeScript", "Canvas API"], category: "algorithms", github: "https://github.com/" + GITHUB_USERNAME + "/pathfinding-visualizer", demo: "https://example.com", featured: true },
+    { slug: "C++ Practice", name: "C++ Practice", description: "My reservoir of advanced C++ practice , from solutions of codeorces problems to netwrok programming, concurrency and advanced features of the language", tech: ["C++", "Concurrency", "Data structures"], category: "Algorithms", github: "https://github.com/" + GITHUB_USERNAME + "/CPP-PRACTICE", demo: "", featured: true },
+   { slug: "Redis", name: "Redis", description: "A redis like cache database created from scratch in modern C++ , leverage thread pools, zsets, avl trees to achieve optimal querying performance. Tested using google test", tech: ["C++", "googleTest", "linux"], category: "Algorithms", github: "https://github.com/" + GITHUB_USERNAME + "/redis-from-scratch", demo: "", featured: false },
+   // { slug: "weather-dash", name: "Weather Dashboard", description: "A minimal, ad-free weather dashboard with hourly forecasts and saved locations, built to be fast on slow connections.", tech: ["Vue", "Tailwind CSS"], category: "web", github: "https://github.com/" + GITHUB_USERNAME + "/weather-dash", demo: "https://example.com", featured: false }
+  ];
 
-    // Für Elise - main theme notes [frequency, duration_beats]
-    // Using simplified A minor theme
-    const notes = [
-        // Main motif x2
-        [659.25, 0.25],[622.25, 0.25],[659.25, 0.25],[622.25, 0.25],[659.25, 0.25],[493.88, 0.25],[587.33, 0.25],[523.25, 0.25],
-        [440.00, 0.5], [0, 0.25],
-        [261.63, 0.25],[329.63, 0.25],[440.00, 0.25],[493.88, 0.5], [0, 0.25],
-        [329.63, 0.25],[415.30, 0.25],[493.88, 0.25],[523.25, 0.5], [0, 0.25],
-        [329.63, 0.25],[659.25, 0.25],[622.25, 0.25],[659.25, 0.25],[622.25, 0.25],[659.25, 0.25],
-        [493.88, 0.25],[587.33, 0.25],[523.25, 0.25],[440.00, 0.5], [0, 0.25],
-        [261.63, 0.25],[329.63, 0.25],[440.00, 0.25],[493.88, 0.5], [0, 0.25],
-        [329.63, 0.25],[523.25, 0.25],[493.88, 0.25],[440.00, 0.75],
-    ];
+  // Newest post first isn't required here — posts are sorted by date at render time.
+  // To add a post: copy an entry, give it a unique "slug", and write "content" as
+  // an array of paragraphs (each string becomes one paragraph on the post view).
+  var blogPosts = [
+   /* { slug: "hello-world", title: "Hello, world — why I built this site", date: "2026-08-01", tags: ["meta", "career"], excerpt: "A short note on why I finally put together a portfolio, and what I'm hoping to use this space for.", content: [
+      "I've put off having a personal site for years, mostly because I kept waiting for it to feel finished before publishing anything. This is me giving up on that idea.",
+      "The plan is to use this space for a few things: a home for my projects, a place to think out loud about problems I run into at work, and eventually a spot to point people when they ask what I've been building.",
+      "If you're reading this, thanks for stopping by — there's more to come."
+    ]},
+    { slug: "notes-on-queues", title: "A few notes on building a task queue from scratch", date: "2026-07-18", tags: ["backend", "systems"], excerpt: "Some of what I learned building a small Redis-backed job queue, including the mistakes I'd avoid next time.", content: [
+      "Building a task queue sounds simple until you hit the second worker. Once you have more than one consumer, you need to think carefully about at-least-once vs. exactly-once delivery, and honestly, most projects don't need exactly-once.",
+      "The biggest lesson: idempotency in the job handler will save you more pain than any amount of cleverness in the queue itself. Assume every job might run twice and design accordingly.",
+      "Retries with exponential bsackoff and a dead-letter queue got me 90% of the reliability I wanted, for about 10% of the effort of anything fancier."
+    ]}, */
+    { slug: "First", title: "First Blog and new beginnings", date: "2026-08-30", tags: ["Backend", "C++", "Life"], excerpt: "Re evaluating my life decisions :(", content: [ 
+      
+      "After a heart felt good bye to the love of my life ( C++ ), I began my journey in python & java at my current place of work, three months in and dozens of life lessons's later I have realized I want to do C++",
+      "C++, computer netwroking and Comp. Architecture , how do they relate with backend and hell even django ? Well my friend want to write high performance pipelines C plus plus , want to write custom allocator that are faster 4 x faster new/delete C plus plus ! Being good or educated in computer helps you understand the need of nginx, how your application communicates over the network, and computer helps you understand locks, multi threading, thread contention and how your computer works at the lowest level.",
+      "On to backend, part I have a bad habit of trying to rush and speed run my learning so that I can start working right away, and that leads to nasty bugs and bad practices. So this time I am actually being patient and dilligent with my learning, I am taking it easy , focussing on design patterns and making meaningful project that teach me and challenge me. I have also bought Designing Data Intensive Applicaions with my salary that I am very proud of ." ,
+      "Today I am gonna design a web hook system using django and RabbitMQ , as some one special will be reading this and I would need a nice excuse.You know how I be ;-]"
+      
+    ]}
+  ];
 
-    const BPM = 84;
-    const BEAT = 60 / BPM;
+  var categoryLabels = { All: "All", web: "Web", backend: "Backend", algorithms: "Algorithms", ml: "Machine Learning" };
 
-    function playNotes() {
-        if (!playing) return;
-        scheduledNodes = [];
-        let t = ctx.currentTime + 0.05;
+  /* ==============================================================
+     2. ICONS — small inline SVG set, reused everywhere below.
+     ============================================================== */
+  var icons = {
+    github: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-4.3 1.4-4.3-2.5-6-3m12 5v-3.5c0-1 .1-1.4-.5-2 2.8-.3 5.5-1.4 5.5-6a4.6 4.6 0 0 0-1.3-3.2 4.2 4.2 0 0 0-.1-3.2s-1.1-.3-3.5 1.3a12.3 12.3 0 0 0-6.4 0C6.9 2.8 5.8 3.1 5.8 3.1a4.2 4.2 0 0 0-.1 3.2A4.6 4.6 0 0 0 4.4 9.5c0 4.6 2.7 5.7 5.5 6-.6.6-.6 1.2-.5 2V21"/></svg>',
+    linkedin: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 8.5v10M6.5 5.5v.01M11 18.5v-5.5c0-1.7 1.2-3 3-3s3 1.3 3 3v5.5M11 13v5.5"/><rect x="3" y="3" width="18" height="18" rx="3"/></svg>',
+    mail: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3.5 6 8.5 7 8.5-7"/></svg>',
+    twitter: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 5.9c-.7.3-1.5.6-2.3.7a4 4 0 0 0 1.8-2.2 8 8 0 0 1-2.5 1 4 4 0 0 0-6.9 3.6A11.4 11.4 0 0 1 3.8 4.6a4 4 0 0 0 1.2 5.3 4 4 0 0 1-1.8-.5v.05a4 4 0 0 0 3.2 3.9 4 4 0 0 1-1.8.07 4 4 0 0 0 3.7 2.8A8 8 0 0 1 2 17.5a11.3 11.3 0 0 0 6.1 1.8c7.4 0 11.4-6.1 11.4-11.4v-.5A8.2 8.2 0 0 0 22 5.9Z"/></svg>',
+    arrowRight: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>',
+    arrowLeft: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>',
+    externalLink: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h6v6M20 4 10 14M18 13v5a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h5"/></svg>',
+    user: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c1.2-3.5 4-5 7-5s5.8 1.5 7 5"/></svg>',
+    post: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3h8l4 4v14H7z"/><path d="M15 3v4h4M9 12h6M9 16h6M9 8h2"/></svg>',
+    folder: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/></svg>',
+    menu: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>',
+    close: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6 6 18"/></svg>'
+  };
+  function icon(name) { return icons[name] || icons.externalLink; }
 
-        notes.forEach(([freq, beats]) => {
-            if (freq === 0) { t += beats * BEAT; return; }
-            const osc = ctx.createOscillator();
-            const gain = ctx.createGain();
-            osc.connect(gain); gain.connect(ctx.destination);
-            osc.type = 'triangle';
-            osc.frequency.setValueAtTime(freq, t);
-            gain.gain.setValueAtTime(0, t);
-            gain.gain.linearRampToValueAtTime(0.12, t + 0.01);
-            gain.gain.exponentialRampToValueAtTime(0.001, t + beats * BEAT * 0.95);
-            osc.start(t);
-            osc.stop(t + beats * BEAT);
-            scheduledNodes.push(osc);
-            t += beats * BEAT;
-        });
-
-        const totalDur = notes.reduce((s, [, b]) => s + b * BEAT * 1000, 0);
-        loopTimeout = setTimeout(playNotes, totalDur - 200);
-    }
-
-    function stopAll() {
-        clearTimeout(loopTimeout);
-        scheduledNodes.forEach(n => { try { n.stop(); } catch(e){} });
-        scheduledNodes = [];
-    }
-
-    btn.addEventListener('click', () => {
-        if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)();
-        if (ctx.state === 'suspended') ctx.resume();
-
-        playing = !playing;
-        btn.textContent = playing ? '♬' : '♪';
-        btn.classList.toggle('playing', playing);
-
-        if (playing) playNotes();
-        else stopAll();
+  /* ==============================================================
+     3. SMALL UTILITIES
+     ============================================================== */
+  function $(sel, scope) { return (scope || document).querySelector(sel); }
+  function $all(sel, scope) { return Array.prototype.slice.call((scope || document).querySelectorAll(sel)); }
+  function escapeHtml(str) {
+    return String(str).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
     });
+  }
+  function prefersReducedMotion() {
+    return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  }
+  function formatDate(dateStr, opts) {
+    var d = new Date(dateStr + "T00:00:00");
+    return d.toLocaleDateString("en-US", opts || { year: "numeric", month: "short", day: "numeric" });
+  }
+  function categoryLabel(cat) {
+    return categoryLabels[cat] || (cat.charAt(0).toUpperCase() + cat.slice(1));
+  }
+
+  /* ==============================================================
+     4. STATIC BINDINGS (name, year, footer socials — same on
+        every view, so these are filled in once at startup)
+     ============================================================== */
+  function renderStaticBindings() {
+    $all('[data-bind="name"]').forEach(function (el) { el.textContent = profile.name; });
+
+    var yearEl = $('[data-slot="year"]');
+    if (yearEl) yearEl.textContent = new Date().getFullYear();
+
+    var footerSocials = $('[data-slot="footer-socials"]');
+    if (footerSocials) {
+      footerSocials.innerHTML = socialLinks.map(function (link) {
+        return '<a class="icon-link" href="' + link.url + '" target="_blank" rel="noopener noreferrer" aria-label="' + escapeHtml(link.label) + '">' + icon(link.icon) + "</a>";
+      }).join("");
+    }
+  }
+
+  /* ==============================================================
+     5. HOME VIEW
+     ============================================================== */
+  function renderHome() {
+    var titleEl = $('[data-slot="hero-title"]');
+    if (titleEl) {
+      titleEl.innerHTML = "<span>&gt; " + escapeHtml(profile.title) + '</span><span class="cursor" aria-hidden="true"></span>';
+    }
+
+    var avatarEl = $('[data-slot="home-avatar"]');
+    if (avatarEl) avatarEl.textContent = profile.initials;
+
+    var featuredWrap = $('[data-slot="featured-projects"]');
+    if (featuredWrap) {
+      var featured = projects.filter(function (p) { return p.featured; }).slice(0, 6);
+      featuredWrap.innerHTML = featured.map(projectCardHtml).join("");
+    }
+
+    var quickNavWrap = $('[data-slot="quick-nav"]');
+    if (quickNavWrap) {
+      var items = [
+        { to: "about", iconName: "user", title: "About me", desc: "My background, skills, and how I got into software." },
+        { to: "projects", iconName: "folder", title: "Projects", desc: "A closer look at what I've built, filterable by category." },
+        { to: "blog", iconName: "post", title: "Blog", desc: "Notes on the systems, tools, and problems I run into." }
+      ];
+      quickNavWrap.innerHTML = items.map(function (item) {
+        return (
+          '<button type="button" class="card nav-card reveal" data-nav-to="' + item.to + '" style="text-align:left; width:100%;">' +
+            '<div class="nav-card-icon">' + icon(item.iconName) + "</div>" +
+            "<h3>" + item.title + "</h3>" +
+            "<p>" + item.desc + "</p>" +
+            '<span class="nav-card-arrow">Explore ' + icon("arrowRight") + "</span>" +
+          "</button>"
+        );
+      }).join("");
+    }
+  }
+
+  function projectCardHtml(project) {
+    var demoLink = project.demo
+      ? '<a class="icon-link" href="' + project.demo + '" target="_blank" rel="noopener noreferrer" aria-label="Live demo of ' + escapeHtml(project.name) + '">' + icon("externalLink") + "</a>"
+      : "";
+    return (
+      '<article class="card project-card reveal">' +
+        '<div class="project-card-head">' +
+          "<h3>" + escapeHtml(project.name) + "</h3>" +
+          '<div class="card-links">' +
+            '<a class="icon-link" href="' + project.github + '" target="_blank" rel="noopener noreferrer" aria-label="' + escapeHtml(project.name) + ' on GitHub">' + icon("github") + "</a>" +
+            demoLink +
+          "</div>" +
+        "</div>" +
+        "<p>" + escapeHtml(project.description) + "</p>" +
+        '<div class="tag-row">' + project.tech.map(function (t) { return '<span class="tag">' + escapeHtml(t) + "</span>"; }).join("") + "</div>" +
+      "</article>"
+    );
+  }
+
+  /* ==============================================================
+     6. ABOUT VIEW
+     ============================================================== */
+  function renderAbout() {
+    var avatarEl = $('[data-slot="about-avatar"]');
+    if (avatarEl) avatarEl.textContent = profile.initials;
+
+    var bioEl = $('[data-slot="bio"]');
+    if (bioEl) bioEl.innerHTML = profile.bio.map(function (p) { return "<p>" + escapeHtml(p) + "</p>"; }).join("");
+
+    var journeyEl = $('[data-slot="journey"]');
+    if (journeyEl) journeyEl.innerHTML = profile.journey.map(function (p) { return "<p>" + escapeHtml(p) + "</p>"; }).join("");
+
+    var skillsWrap = $('[data-slot="skills-groups"]');
+    if (skillsWrap) {
+      skillsWrap.innerHTML = Object.keys(skills).map(function (category) {
+        var items = skills[category];
+        return (
+          '<div class="skills-group reveal">' +
+            "<h3>" + escapeHtml(category) + "</h3>" +
+            '<div class="skills-tags">' + items.map(function (s) { return '<span class="skill-badge">' + escapeHtml(s) + "</span>"; }).join("") + "</div>" +
+          "</div>"
+        );
+      }).join("");
+    }
+
+    var timelineWrap = $('[data-slot="timeline"]');
+    if (timelineWrap) {
+      timelineWrap.innerHTML = experience.map(function (item) {
+        return (
+          '<div class="timeline-item reveal">' +
+            '<span class="timeline-period">' + escapeHtml(item.period) + "</span>" +
+            "<h3>" + escapeHtml(item.role) + "</h3>" +
+            '<span class="timeline-org">' + escapeHtml(item.org) + "</span>" +
+            "<p>" + escapeHtml(item.description) + "</p>" +
+          "</div>"
+        );
+      }).join("");
+    }
+  }
+
+  /* ==============================================================
+     7. PROJECTS VIEW (with simple category filtering)
+     ============================================================== */
+  var activeProjectCategory = "All";
+
+  function renderProjectsView() {
+    var categories = ["All"].concat(
+      projects.map(function (p) { return p.category; }).filter(function (c, i, arr) { return arr.indexOf(c) === i; })
+    );
+
+    var filterBar = $('[data-slot="filter-bar"]');
+    if (filterBar) {
+      filterBar.innerHTML = categories.map(function (cat) {
+        return '<button class="filter-btn" type="button" data-category="' + cat + '" aria-pressed="' + (cat === activeProjectCategory) + '">' + categoryLabel(cat) + "</button>";
+      }).join("");
+
+      $all(".filter-btn", filterBar).forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          activeProjectCategory = btn.dataset.category;
+          $all(".filter-btn", filterBar).forEach(function (b) {
+            b.setAttribute("aria-pressed", String(b.dataset.category === activeProjectCategory));
+          });
+          renderProjectsGrid();
+        });
+      });
+    }
+
+    renderProjectsGrid();
+  }
+
+  function renderProjectsGrid() {
+    var grid = $('[data-slot="projects-grid"]');
+    if (!grid) return;
+
+    var filtered = activeProjectCategory === "All" ? projects : projects.filter(function (p) { return p.category === activeProjectCategory; });
+
+    grid.innerHTML = filtered.length
+      ? filtered.map(function (project) {
+          var demoLink = project.demo
+            ? '<a class="icon-link" href="' + project.demo + '" target="_blank" rel="noopener noreferrer" aria-label="Live demo of ' + escapeHtml(project.name) + '">' + icon("externalLink") + "</a>"
+            : "";
+          return (
+            '<article class="card project-card reveal is-visible">' +
+              '<div class="project-card-head">' +
+                "<h3>" + escapeHtml(project.name) + "</h3>" +
+                '<div class="card-links">' +
+                  '<a class="icon-link" href="' + project.github + '" target="_blank" rel="noopener noreferrer" aria-label="' + escapeHtml(project.name) + ' on GitHub">' + icon("github") + "</a>" +
+                  demoLink +
+                "</div>" +
+              "</div>" +
+              "<p>" + escapeHtml(project.description) + "</p>" +
+              '<div class="tag-row"><span class="tag">' + categoryLabel(project.category) + "</span>" +
+                project.tech.map(function (t) { return '<span class="tag tag-muted">' + escapeHtml(t) + "</span>"; }).join("") +
+              "</div>" +
+            "</article>"
+          );
+        }).join("")
+      : '<p class="empty-state">No projects in this category yet — check back soon.</p>';
+  }
+
+  /* ==============================================================
+     8. BLOG VIEW (list + single-post detail, both rendered into
+        the same container so the whole thing stays one page)
+     ============================================================== */
+  function renderBlogView(slug) {
+    var wrap = $('[data-slot="blog-container"]');
+    if (!wrap) return;
+
+    var post = slug ? blogPosts.filter(function (p) { return p.slug === slug; })[0] : null;
+
+    if (slug && post) {
+      wrap.innerHTML =
+        '<button type="button" class="back-link fade-in" data-nav-to="blog">' + icon("arrowLeft") + " Back to blog</button>" +
+        '<div class="post-header fade-in">' +
+          '<div class="blog-card-meta"><time datetime="' + post.date + '">' + formatDate(post.date, { year: "numeric", month: "long", day: "numeric" }) + '</time><span aria-hidden="true">·</span><span>' + post.tags.join(", ") + "</span></div>" +
+          "<h1>" + escapeHtml(post.title) + "</h1>" +
+        "</div>" +
+        '<div class="post-body fade-in">' + post.content.map(function (item) {
+
+  // IMAGE
+  if (typeof item === "object" && item.type === "image") {
+    return `
+      <img
+        src="${item.src}"
+        class="blog-post-image"
+        alt="Blog image"
+      >
+    `;
+  }
+
+  // NORMAL TEXT
+  if (typeof item === "string") {
+    return `<p>${escapeHtml(item)}</p>`;
+  }
+
+  return "";
+
+}).join("") + "</div>";
+    } else if (slug && !post) {
+      wrap.innerHTML =
+        '<button type="button" class="back-link fade-in" data-nav-to="blog">' + icon("arrowLeft") + " Back to blog</button>" +
+        '<div class="post-header fade-in"><h1>Post not found</h1><p>That post doesn\'t exist, or the link may be out of date.</p></div>';
+    } else {
+      var sorted = blogPosts.slice().sort(function (a, b) { return new Date(b.date) - new Date(a.date); });
+      wrap.innerHTML =
+        '<div class="section-head fade-in">' +
+          '<span class="eyebrow">// blog</span>' +
+          '<h1 class="page-title">Writing</h1>' +
+          "<p>Notes on backend systems, tools, and whatever I've been debugging lately.</p>" +
+        "</div>" +
+        '<div class="card-grid">' +
+          (sorted.length
+            ? sorted.map(function (p) {
+                return (
+                  '<article class="card blog-card reveal is-visible">' +
+                    '<div class="blog-card-meta"><time datetime="' + p.date + '">' + formatDate(p.date) + '</time><span aria-hidden="true">·</span><span>' + p.tags.join(", ") + "</span></div>" +
+                    "<h3>" + escapeHtml(p.title) + "</h3>" +
+                    "<p>" + escapeHtml(p.excerpt) + "</p>" +
+                    '<button type="button" class="read-more" data-nav-to="blog" data-slug="' + p.slug + '">Read more ' + icon("arrowRight") + "</button>" +
+                  "</article>"
+                );
+              }).join("")
+            : '<p class="empty-state">No posts yet — first one\'s coming soon.</p>') +
+        "</div>";
+    }
+
+    // "Read more" buttons rendered inside this view navigate to a specific post
+    $all('[data-slug]', wrap).forEach(function (btn) {
+      btn.addEventListener("click", function () { goTo("blog", btn.dataset.slug); });
+    });
+  }
+
+  /* ==============================================================
+     9. ROUTER — hash-based navigation between the four views.
+        Hash formats: #home, #about, #blog, #projects, #blog/<slug>
+     ============================================================== */
+  var VALID_VIEWS = ["home", "about", "blog", "projects"];
+
+  function goTo(view, slug) {
+    var hash = "#" + view + (slug ? "/" + slug : "");
+    if (window.location.hash === hash) {
+      handleRoute(); // same hash won't fire 'hashchange' — force a re-render (e.g. switching between posts)
+    } else {
+      window.location.hash = hash;
+    }
+  }
+
+  function parseHash() {
+    var raw = window.location.hash.replace(/^#/, "");
+    var parts = raw.split("/");
+    var view = VALID_VIEWS.indexOf(parts[0]) !== -1 ? parts[0] : "home";
+    var slug = parts[1] ? decodeURIComponent(parts[1]) : null;
+    return { view: view, slug: slug };
+  }
+
+  function handleRoute() {
+    var route = parseHash();
+    if (route.view === "blog") renderBlogView(route.slug);
+    switchToView(route.view);
+    updateNavActiveState(route.view);
+    closeMobileNav();
+  }
+
+  function switchToView(viewName) {
+    var target = document.getElementById("view-" + viewName);
+    if (!target) return;
+    var current = $(".view.is-active");
+
+    if (current === target) return;
+
+    if (current) current.classList.remove("is-active");
+    target.classList.add("is-active");
+
+    if (!prefersReducedMotion()) {
+      target.animate(
+        [{ opacity: 0, transform: "translateY(14px)" }, { opacity: 1, transform: "translateY(0)" }],
+        { duration: 380, easing: "cubic-bezier(0.16,1,0.3,1)" }
+      );
+    }
+
+    window.scrollTo({ top: 0, behavior: prefersReducedMotion() ? "auto" : "smooth" });
+    observeReveals(target);
+  }
+
+  function updateNavActiveState(viewName) {
+    $all("[data-nav-links] button[data-nav-to]").forEach(function (btn) {
+      if (btn.dataset.navTo === viewName) btn.setAttribute("aria-current", "page");
+      else btn.removeAttribute("aria-current");
+    });
+  }
+
+  /* ==============================================================
+     10. SCROLL-REVEAL ANIMATION (per-view, re-applied whenever a
+         view becomes active, since content is swapped in place)
+     ============================================================== */
+  var revealObserver = null;
+  function observeReveals(scopeEl) {
+    var targets = $all(".reveal:not(.is-visible)", scopeEl || document);
+    if (!targets.length) return;
+
+    if (prefersReducedMotion()) {
+      targets.forEach(function (el) { el.classList.add("is-visible"); });
+      return;
+    }
+
+    if (!revealObserver) {
+      revealObserver = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("is-visible");
+            revealObserver.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.12, rootMargin: "0px 0px -40px 0px" });
+    }
+
+    targets.forEach(function (el) { revealObserver.observe(el); });
+  }
+
+  /* ==============================================================
+     11. NAV WIRING — theme toggle, mobile menu, in-page nav clicks
+     ============================================================== */
+  function initThemeToggle() {
+    var toggle = $("[data-theme-toggle]");
+    if (!toggle) return;
+    toggle.addEventListener("click", function () {
+      var root = document.documentElement;
+      var next = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
+      root.setAttribute("data-theme", next);
+      localStorage.setItem("theme", next);
+    });
+  }
+
+  function initMobileNav() {
+    var btn = $("[data-nav-toggle]");
+    var links = $("[data-nav-links]");
+    if (!btn || !links) return;
+    btn.addEventListener("click", function () {
+      var isOpen = links.classList.toggle("is-open");
+      btn.setAttribute("aria-expanded", String(isOpen));
+      btn.innerHTML = isOpen ? icon("close") : icon("menu");
+    });
+  }
+
+  function closeMobileNav() {
+    var btn = $("[data-nav-toggle]");
+    var links = $("[data-nav-links]");
+    if (!btn || !links) return;
+    links.classList.remove("is-open");
+    btn.setAttribute("aria-expanded", "false");
+    btn.innerHTML = icon("menu");
+  }
+
+  function initNavClicks() {
+    // Event delegation: catches every current AND future [data-nav-to]
+    // button, including ones rendered dynamically inside views.
+    document.addEventListener("click", function (e) {
+      var btn = e.target.closest ? e.target.closest("[data-nav-to]") : null;
+      if (!btn) return;
+      goTo(btn.dataset.navTo, btn.dataset.slug);
+    });
+  }
+
+  /* ==============================================================
+     12. INIT
+     ============================================================== */
+  document.addEventListener("DOMContentLoaded", function () {
+    renderStaticBindings();
+    renderHome();
+    renderAbout();
+    renderProjectsView();
+    // Blog view is rendered by handleRoute() below, since it depends on the hash.
+
+    initThemeToggle();
+    initMobileNav();
+    initNavClicks();
+
+    window.addEventListener("hashchange", handleRoute);
+    handleRoute(); // render whichever view the URL points to on first load
+  });
 })();
 </script>
-
 </body>
 </html>
