@@ -759,7 +759,35 @@ button { font-family: inherit; cursor: pointer; }
       "On to backend, part I have a bad habit of trying to rush and speed run my learning so that I can start working right away, and that leads to nasty bugs and bad practices. So this time I am actually being patient and dilligent with my learning, I am taking it easy , focussing on design patterns and making meaningful project that teach me and challenge me. I have also bought Designing Data Intensive Applicaions with my salary that I am very proud of ." ,
       "Today I am gonna design a web hook system using django and RabbitMQ , as some one special will be reading this and I would need a nice excuse.You know how I be ;-]"
       
-    ]}
+    ]},
+
+
+    {
+  slug: "normalization-vs-denormalization-vs-joins",
+  title: "Normalization vs Denormalization vs Joins",
+  date: "2026-08-31",
+  tags: ["Backend", "Databases", "System Design"],
+  excerpt: "Why do we split data across tables, and when is keeping duplicated data actually a good idea?",
+
+  content: [
+    "When designing a relational database, one of the first things we need to think about is how we organize our data. A common approach is normalization: organizing data into multiple related tables to reduce redundancy and keep the data consistent."
+    ,
+
+     "Normalization is commonly discussed in terms of normal forms such as 1NF, 2NF, 3NF, and BCNF. The general idea is to structure our tables so that we don't unnecessarily store the same piece of information in multiple places.",
+
+     "But there is a trade-off. One of the biggest downsides of normalized data is that retrieving information can require more complex JOIN operations across multiple tables.",
+    "Because a piece of information generally needs to be stored only once, writes can be simpler and we avoid having to update multiple copies of the same data. On the other hand, queries may become more expensive because we sometimes need to join several tables together to reconstruct the information we actually want.",
+    "This is one reason normalization tends to work well for OLTP (Online Transaction Processing) systems. These systems deal with frequent inserts, updates, and deletes and need strong consistency. Banking systems and inventory management are good examples.",
+    "In an inventory system, for example, having the same product information duplicated across many records can create problems. If the product name or price changes, we would potentially have to update multiple copies. A normalized design gives us a single source of truth.",
+    "For smaller-scale systems that don't have extremely demanding throughput requirements, normalization is often a straightforward and sensible choice. It keeps the data organized and reduces unnecessary duplication.",
+  "Denormalization takes almost the opposite approach. Instead of aggressively removing redundancy, we intentionally duplicate some data so that it can be read more efficiently.",
+   "The benefit is that reads can become much faster because we don't need as many JOINs or queries to retrieve the information we need. The downside is that writes become more complicated because the same piece of information may exist in multiple places.",
+     "This approach is particularly useful in analytical systems. OLAP (Online Analytical Processing) workloads and business intelligence systems often perform large, read-heavy queries over huge amounts of data. In these situations, reducing the amount of work required during reads can be worth the additional storage and write complexity.",
+    "So the basic trade-off looks something like this: normalization reduces redundancy and makes maintaining consistent data easier, while denormalization can make read-heavy workloads faster at the cost of duplicated data and more complicated writes.",
+     "Neither approach is universally better. The right choice depends on the workload, the read-to-write ratio, consistency requirements, query patterns, and the scale of the system.",
+    
+  ]
+}
   ];
 
   var categoryLabels = { All: "All", web: "Web", backend: "Backend", algorithms: "Algorithms", ml: "Machine Learning" };
