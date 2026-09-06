@@ -787,6 +787,65 @@ button { font-family: inherit; cursor: pointer; }
      "Neither approach is universally better. The right choice depends on the workload, the read-to-write ratio, consistency requirements, query patterns, and the scale of the system.",
     
   ]
+},
+
+{
+  slug: "what-i-learned-making-django-crm",
+  title: "What I Learned Making a Django CRM",
+  date: "2026-09-06",
+  tags: ["Backend", "Django", "Python", "OOP"],
+  excerpt: "Building a Django CRM taught me that OOP is actually pretty damn useful for modelling real-world systems.",
+
+  content: [
+    
+      "OOP is actually very helpful for modelling real-world use cases. As a functional programming fanboy, this was honestly a bit of a wake-up call."
+    ,
+
+  "Python wasn't designed purely around object-oriented programming, but it is pretty damn good at it. Building my CRM made this much more obvious to me because a lot of the things I was modelling naturally mapped to objects and their behaviour."
+    ,
+
+    
+       "Getting started with Django is surprisingly straightforward. You can create a project with `django-admin startproject your_project_name`, cd into it, and then create an application using `python manage.py startapp app_name`."
+    ,
+
+     "You can create as many apps as your project needs. For a larger system, you might have separate components responsible for things such as publishers, subscribers, brokers, middleware, or other pieces of functionality. For my CRM, I kept things relatively simple."
+    ,
+
+    "Then you go into settings.py and add your applications to the INSTALLED_APPS list. After that, you configure urls.py so Django knows where to route incoming requests. I kept a single application URL configuration for simplicity."
+    ,
+
+     "You also configure the DATABASES dictionary in settings.py. This is where you specify things like the database engine, database name, username, password, host, and port."
+    ,
+  "Once the basic configuration is done, Django's migration system takes over. You can run `python manage.py makemigrations` to generate migration files and then `python manage.py migrate` to apply them to the database."
+    ,
+
+    "You can also use `python manage.py check` to check for common problems in your project before finally running `python manage.py runserver` and being greeted by the infamous default Django page."
+    ,
+
+     "Django follows the MTV pattern: Model, Template, View. In models.py, you define your data models and fields, and Django generates an ORM around them. This means you don't have to manually write all the repetitive SQL for things like creating tables, primary keys, and relationships."
+    ,
+
+   "After that, Django becomes a bit of a chicken-and-egg situation. You define your views, which contain the business logic and application behaviour, and those views can return templates or forms depending on what you're building."
+    ,
+
+     "Templates are where you define the HTML presented to the user. Django also provides mechanisms such as `{% csrf_token %}` to protect forms against Cross-Site Request Forgery (CSRF) attacks. I won't deep dive into HTML or Django templates here because that's a topic big enough for its own post."
+    ,
+
+    "In a real project, you can use Django to build things like authentication, login and logout, registration, creating records, updating records, and deleting records. Putting all of these pieces together is what made the CRM project particularly useful for me."
+    ,
+
+     "The biggest thing I took away from the project wasn't really a specific Django command. It was getting a better understanding of how all these pieces fit together into an actual backend application."
+    ,
+
+   "For my next project, I want to push things a little further. I want to experiment with WebAssembly on the frontend and spend more time optimizing the database for concurrency and responsiveness."
+    ,
+
+   "The idea is to build a card-playing website where people can play games like Bridge, Solitaire, Klondike, and hopefully a few others. It should be a fun excuse to combine backend development, performance optimization, concurrency, and some lower-level work."
+    ,
+
+    "Let's see how that one goes."
+    
+  ]
 }
   ];
 
